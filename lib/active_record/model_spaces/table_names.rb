@@ -12,13 +12,13 @@ module ActiveRecord
           instance_eval{|s| ActiveSupport::Inflector.pluralize(s)}
       end
 
-      def model_space_table_name(model, model_space)
-        [("#{model_space}__" if model_space && !model_space.empty?),
+      def model_space_table_name(model, model_space_prefix)
+        [("#{model_space_prefix}__" if model_space_prefix && !model_space_prefix.empty?),
           base_table_name(model)].join
       end
 
-      def table_name(model, model_space, history_versions, v)
-        [model_space_table_name(model, model_space),
+      def table_name(model, model_space_prefix, history_versions, v)
+        [model_space_table_name(model, model_space_prefix),
           ("__#{version(history_versions, v)}" if
             is_versioned?(history_versions) &&
             v &&
