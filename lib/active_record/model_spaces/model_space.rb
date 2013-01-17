@@ -1,4 +1,5 @@
 require 'active_support'
+require 'active_record/model_spaces/model_registration'
 require 'active_record/model_spaces/context'
 
 module ActiveRecord
