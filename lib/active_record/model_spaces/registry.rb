@@ -22,16 +22,18 @@ module ActiveRecord
         register_model_space_for_model(model, ms)
       end
 
+      def table_name(model)
+        get_context_for_model(model).table_name(model)
+      end
+
       # create a new version of the model
       def new_version(model, &block)
-        ms = get_model_space_for_model(model)
-        model_spaces_merged_context[ms.name].new_version(model, &block)
+        get_context_for_model(model).new_version(model, &block)
       end
 
       # create an updated version of the model
       def updated_version(model, &block)
-        ms = get_model_space_for_model(model)
-        model_spaces_merged_context[ms.name].updated_version(model, &block)
+        get_context_for_model(model).updated_version(model, &block)
       end
 
       # execute a block with a ModelSpace context.
@@ -91,6 +93,14 @@ module ActiveRecord
         end
       end
 
+      def get_context_for_model(model)
+        ms = get_model_space_for_model(model)
+        raise "#{model.to_s} is not registered to any ModelSpace" if !ms
+        raise "#{ms.name} has no current context" if !merged_context
+        ctx = self.merged_context[ms.name]
+        raise "#{ms.name} has no current context" if !ctx
+        ctx
+      end
     end
   end
 end

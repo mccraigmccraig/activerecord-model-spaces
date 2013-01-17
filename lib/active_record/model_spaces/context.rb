@@ -17,6 +17,10 @@ module ActiveRecord
         @current_model_tables = persistor.read_model_space_tables(model_space.name, prefix)
       end
 
+      # implements the Model.table_name method
+      def table_name(model)
+      end
+
       def new_version(model, &block)
       end
 

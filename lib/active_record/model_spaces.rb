@@ -28,6 +28,10 @@ module ActiveRecord
         REGISTRY.register_model(self, model_space_name, opts)
       end
 
+      def table_name
+        REGISTRY.table_name(self)
+      end
+
       # create a new version of the model
       def new_version(&block)
         REGISTRY.new_version(self, &block)

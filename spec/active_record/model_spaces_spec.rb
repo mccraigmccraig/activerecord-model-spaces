@@ -17,6 +17,12 @@ module ActiveRecord
       klass.in_model_space :foo_space
     end
 
+    it "should pass table_name calls to the registry" do
+      klass = create_model_spaces_class
+      ModelSpaces::REGISTRY.should_receive(:table_name).with(klass).and_return("foos")
+      klass.table_name.should == "foos"
+    end
+
     it "should pass new_version calls to the registry" do
       klass = create_model_spaces_class
       ModelSpaces::REGISTRY.should_receive(:new_version).with(klass).and_return do |k, &proc|
