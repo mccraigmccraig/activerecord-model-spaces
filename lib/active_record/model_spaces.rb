@@ -41,6 +41,10 @@ module ActiveRecord
       def updated_version(&block)
         REGISTRY.updated_version(self, &block)
       end
+
+      def hoover
+        REGISTRY.hoover(self)
+      end
     end
 
   end

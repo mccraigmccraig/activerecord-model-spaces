@@ -36,6 +36,10 @@ module ActiveRecord
         get_context_for_model(model).updated_version(model, &block)
       end
 
+      def hoover(model)
+        get_context_for_model(model).hoover
+      end
+
       # execute a block with a ModelSpace context.
       # only a single context can be active for a given ModelSpace at
       # any time, though different contexts can be active for

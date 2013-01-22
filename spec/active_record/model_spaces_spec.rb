@@ -38,5 +38,11 @@ module ActiveRecord
       end
       klass.updated_version{:blah}
     end
+
+    it "should pass hoover calls to the registry" do
+      klass = create_model_spaces_class
+      ModelSpaces::REGISTRY.should_receive(:hoover).with(klass).and_return(true)
+      klass.hoover
+    end
   end
 end
