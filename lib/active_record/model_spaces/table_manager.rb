@@ -17,7 +17,7 @@ module ActiveRecord
       def create_table(base_table_name, table_name)
         if table_name != base_table_name
           base_table_schema = table_schema(base_table_name)
-          table_schema = change_table_name(base_table_schema)
+          table_schema = change_table_name(base_table_name, table_name, base_table_schema)
           connection.instance_eval(table_schema)
         end
       end
@@ -36,7 +36,7 @@ module ActiveRecord
       end
 
       # truncate a table
-      def truncate_table(table)
+      def truncate_table(table_name)
         connection.execute("truncate table #{table_name}")
       end
 
@@ -49,14 +49,14 @@ module ActiveRecord
 
       # retrieve a schema.rb fragment pertaining to the table called table_name. uses a private Rails API
       def table_schema(table_name)
-        ActiveRecord::SchemaDumper.send(:new, connection).send(:table, base_table_name, StringIO.new).string
+        ActiveRecord::SchemaDumper.send(:new, connection).send(:table, table_name, StringIO.new).string
       end
 
       # change the table_name in a schema.rb fragment
-      def change_table_name(schema)
+      def change_table_name(base_table_name, table_name, schema)
         schema.
-          gsub(/create_table \"#{base_table_name}\"/, "create table \"#{table_name}\"").
-          gsub(/add_index \"#{base_table_name}\"/, "add index \"#{table_name}\"")
+          gsub(/create_table \"#{base_table_name}\"/, "create_table \"#{table_name}\"").
+          gsub(/add_index \"#{base_table_name}\"/, "add_index \"#{table_name}\"")
       end
     end
   end
