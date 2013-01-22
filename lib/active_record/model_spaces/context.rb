@@ -10,11 +10,11 @@ module ActiveRecord
       attr_reader :current_model_versions
       attr_reader :working_model_versions
 
-      def initialize(model_space, prefix, persistor)
+      def initialize(model_space, model_space_key, persistor)
         @model_space = model_space
-        @prefix = prefix
+        @model_space_key = model_space_key
         @persistor = persistor
-        @current_model_versions = persistor.read_model_space_model_versions(model_space.name, prefix)
+        @current_model_versions = persistor.read_model_space_model_versions(model_space.name, model_space_key)
       end
 
       # implements the Model.table_name method
