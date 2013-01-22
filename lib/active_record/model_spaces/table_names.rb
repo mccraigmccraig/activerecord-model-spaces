@@ -12,17 +12,20 @@ module ActiveRecord
           instance_eval{|s| ActiveSupport::Inflector.pluralize(s)}
       end
 
-      def model_space_table_name(model, model_space_prefix)
-        [("#{model_space_prefix}__" if model_space_prefix && !model_space_prefix.empty?),
-          base_table_name(model)].join
+      def model_space_table_name(model_space_name, model_space_key, model)
+        if (!model_space_name || model_space_name.empty?) &&
+            (model_space_key && !model_space_key.empty?)
+          raise "model_space_key cannot be non-empty if model_space_name is empty"
+        end
+
+        [ ("#{model_space_name}__" if model_space_name && !model_space_name.empty?),
+          ("#{model_space_key}__" if model_space_key && !model_space_key.empty?),
+          base_table_name(model)].compact.join
       end
 
-      def table_name(model, model_space_prefix, history_versions, v)
-        [model_space_table_name(model, model_space_prefix),
-          ("__#{version(history_versions, v)}" if
-            is_versioned?(history_versions) &&
-            v &&
-            version(history_versions, v) > 0)].join
+      def table_name(model_space_name, model_space_key, model, history_versions, v)
+        [model_space_table_name(model_space_name, model_space_key, model),
+          ("__#{v}" if v && v>0)].compact.join
       end
 
       def next_version(history_versions, v)

@@ -12,39 +12,48 @@ module ActiveRecord
       end
 
       describe "model_space_table_name" do
-        it "should return base table-name if no model-space given" do
-          TableNames.model_space_table_name("FooBar", nil).should == "foo_bars"
+        it "should return base table-name if no model-space or model-space-key given" do
+          TableNames.model_space_table_name(nil, nil, "FooBar").should == "foo_bars"
         end
 
-        it "should return base table-name if an empty model-space given" do
-          TableNames.model_space_table_name("FooBar", "").should == "foo_bars"
+        it "should return base table-name if an empty model-space and model-space-key given" do
+          TableNames.model_space_table_name("", "", "FooBar").should == "foo_bars"
         end
 
-        it "should prefix a model-space if given" do
-          TableNames.model_space_table_name("FooBar", "blarghl").should == "blarghl__foo_bars"
+        it "should prefix with model-space-name if given alone" do
+          TableNames.model_space_table_name("blarghl", nil, "FooBar").should == "blarghl__foo_bars"
+        end
+
+        it "should prefix a model-space-name and model-space-key if bothgiven" do
+          TableNames.model_space_table_name("blarghl", "one", "FooBar").should == "blarghl__one__foo_bars"
+        end
+
+        it "should raise an error if a model-space-key is given without a model-space-name" do
+
+          expect {
+            TableNames.model_space_table_name(nil, "one", "FooBar")
+          }.to raise_error /model_space_key cannot be non-empty if model_space_name is empty/
+
         end
       end
 
       describe "table_name" do
-        it "should do nothing if history versions is nil" do
-          TableNames.table_name("FooBar", "blarghl", nil, 1).should == "blarghl__foo_bars"
-        end
+        it "should always suffix version provided if non-nil and >0" do
+          TableNames.table_name("blarghl", "one", "FooBar", nil, nil).should == "blarghl__one__foo_bars"
+          TableNames.table_name("blarghl", "one", "FooBar", nil, 1).should == "blarghl__one__foo_bars__1"
+          TableNames.table_name("blarghl", "one", "FooBar", 0, nil).should == "blarghl__one__foo_bars"
+          TableNames.table_name("blarghl", "one", "FooBar", 0, 1).should == "blarghl__one__foo_bars__1"
 
-        it "should suffix version if history_versions is not nil" do
-          TableNames.table_name("FooBar", "blarghl", nil, nil).should == "blarghl__foo_bars"
-          TableNames.table_name("FooBar", "blarghl", 0, nil).should == "blarghl__foo_bars"
-          TableNames.table_name("FooBar", "blarghl", 0, 1).should == "blarghl__foo_bars"
+          TableNames.table_name("blarghl", "one", "FooBar", 1, 0).should == "blarghl__one__foo_bars"
+          TableNames.table_name("blarghl", "one", "FooBar", 1, 1).should == "blarghl__one__foo_bars__1"
+          TableNames.table_name("blarghl", "one", "FooBar", 1, 2).should == "blarghl__one__foo_bars__2"
+          TableNames.table_name("blarghl", "one", "FooBar", 1, 3).should == "blarghl__one__foo_bars__3"
 
-          TableNames.table_name("FooBar", "blarghl", 1, 0).should == "blarghl__foo_bars"
-          TableNames.table_name("FooBar", "blarghl", 1, 1).should == "blarghl__foo_bars__1"
-          TableNames.table_name("FooBar", "blarghl", 1, 2).should == "blarghl__foo_bars"
-          TableNames.table_name("FooBar", "blarghl", 1, 3).should == "blarghl__foo_bars__1"
-
-          TableNames.table_name("FooBar", "blarghl", 2, 0).should == "blarghl__foo_bars"
-          TableNames.table_name("FooBar", "blarghl", 2, 1).should == "blarghl__foo_bars__1"
-          TableNames.table_name("FooBar", "blarghl", 2, 2).should == "blarghl__foo_bars__2"
-          TableNames.table_name("FooBar", "blarghl", 2, 3).should == "blarghl__foo_bars"
-          TableNames.table_name("FooBar", "blarghl", 2, 4).should == "blarghl__foo_bars__1"
+          TableNames.table_name("blarghl", "one", "FooBar", 2, 0).should == "blarghl__one__foo_bars"
+          TableNames.table_name("blarghl", "one", "FooBar", 2, 1).should == "blarghl__one__foo_bars__1"
+          TableNames.table_name("blarghl", "one", "FooBar", 2, 2).should == "blarghl__one__foo_bars__2"
+          TableNames.table_name("blarghl", "one", "FooBar", 2, 3).should == "blarghl__one__foo_bars__3"
+          TableNames.table_name("blarghl", "one", "FooBar", 2, 4).should == "blarghl__one__foo_bars__4"
         end
       end
 

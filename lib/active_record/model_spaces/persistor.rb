@@ -1,9 +1,7 @@
 module ActiveRecord
   module ModelSpaces
 
-    # manages ModelSpace persistence... subclasses
-    # should be provided for specific databases, named by
-    # AdapterNamePersistor e.g. MySQLPersistor, PostgreSQLPersistor
+    # manages ModelSpace persistence...
     class Persistor
 
       attr_reader :connection
@@ -16,25 +14,52 @@ module ActiveRecord
 
       # list all persisted prefixes for a given model space
       def list_prefixes(model_space_name)
-        raise "Implement me"
+        connection.select_rows("select model_space_name from #{table_name}").map{|r| r.first}
       end
 
-      # returns a map of {ModelName => TableName} entries for a given model-space
-      def read_model_space_tables(model_space_name, prefix)
-        raise "Implement me"
+      # returns a map of {ModelName => version} entries for a given model-space and prefix
+      def read_model_space_model_versions(model_space_name, prefix)
+        connection.select_all("select model_name, version from #{table_name} where model_space_name=#{model_space_name} and prefix=#{prefix}").reduce({}){|h,r| h[r["model_name"]] = r["version"]}
       end
 
-      def update_model_space_tables(model_space_name, prefix, model_tables)
-        raise "Implement me"
-      end
+      # update
+      def update_model_space_model_versions(model_space_name, prefix, new_model_versions)
+        ActiveRecord::Base.transaction do
+          old_model_versions = read_model_space_model_versions(model_space_name, prefix)
 
-      # copy all data to the base model-space tables and drop all history tables
-      def hoover_model_space(model_space_name, prefix)
-        raise "Implement me"
+          new_model_versions.map do |model_name, new_version|
+            old_version = old_model_versions[model_name]
+
+            if old_version && new_version && old_version != new_version && new_version != 0
+
+              connection.execute("update #{table_name} set version=#{new_version} where model_space_name=#{model_space_name} and prefix=#{prefix} and model_name=#{model_name}")
+
+            elsif !old_version && new_version && new_version != 0
+
+              connecion.execute("insert into #{table_name} (model_space_name, prefix, model_name, version) values (#{model_space_name}, #{prefix}, #{model_name}, #{new_version})")
+
+            elsif old_version && ( !new_version || new_version == 0 )
+
+              connection.execute("delete from #{table_name} where model_space_name=#{model_space_name} and prefix=#{prefix} and model_name=#{model_name}")
+            end
+          end
+          true
+        end
       end
 
       # create the model_spaces table if it doesn't exist
-      def create_model_spaces_table
+      def create_model_spaces_table(connection, tn)
+        if !connection.table_exists?(tn)
+          connection.instance_eval do
+            create_table(tn) do |t|
+              t.string :model_space_name, :null=>false
+              t.string :model_space_key, :null=>false
+              t.string :model_name, :null=>false
+              t.integer :version, :null=>false, :default=>0
+            end
+            add_index tn, [:model_space_name, :prefix, :model_name], :unique=>true
+          end
+        end
       end
     end
 

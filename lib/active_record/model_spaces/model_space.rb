@@ -1,6 +1,7 @@
+require 'set'
 require 'active_support'
-require 'active_record/model_spaces/model_registration'
 require 'active_record/model_spaces/context'
+require 'active_record/model_spaces/persistor'
 
 module ActiveRecord
   module ModelSpaces
@@ -23,13 +24,22 @@ module ActiveRecord
       end
 
       def register_model(model, opts={})
-        reg = ModelRegistration.new(model, self, opts[:history_versions])
-        self.model_registrations[model] = reg
+        ModelSpaces.check_model_registration_keys(opts.keys)
+        opts[:history_versions] ||= 0
+        self.model_registrations[model] = opts
         self
       end
 
-      def create_context(prefix)
-        ctx = Context.new(self, prefix, ModelSpaces.create_persistor(ModelSpaces.connection || ActiveRecord::Base.connection ))
+      def history_versions(model)
+        self.model_registrations[model][:history_versions]
+      end
+
+      def registered_models
+        self.model_registrations.keys
+      end
+
+      def create_context(model_space_key)
+        ctx = Context.new(self, model_space_key, ModelSpaces.create_persistor)
       end
     end
 
@@ -37,22 +47,17 @@ module ActiveRecord
 
     module_function
 
-    # get a persistor given a connection... returns an instance of
-    # ActiveRecord::ModelSpaces::AdapterNamePersistor
-    def create_persistor(connection)
-      pcn = "#{connection.adapter_name}Persistor"
-      Kernel.require ActiveSupport::Inflector.underscore("ActiveRecord::ModelSpaces::#{pcn}") if ! ModelSpaces.const_defined?(pcn)
+    MODEL_REGISTRATION_KEYS = [:history_versions].to_set
 
-      ModelSpaces.const_get(pcn).new(connection, self.table_name)
+    def check_model_registration_keys(keys)
+      unknown_keys = (keys.map(&:to_sym).to_set - MODEL_REGISTRATION_KEYS).to_a
+      raise "unknown keys: #{unknown_keys.inspect}" if !unknown_keys.empty?
     end
 
-    # get a TableManager suitable for use with a given adapter... returns an instance of
-    # ActiveRecord::ModelSpaces::AdapterNameTableManager
-    def create_table_manager(adapter_name)
-      tmcn = "#{adapter_name}TableManager"
-      Kernel.require ActiveSupport::Inflector.underscore("ActiveRecord::ModelSpaces::#{tmcn}") if ! ModelSpaces.const_defined?(tmcn)
-
-      ModelSpaces.const_get(tmcn).new
+    # get a persistor given a connection... returns an instance of
+    # ActiveRecord::ModelSpaces::AdapterNamePersistor
+    def create_persistor
+      Persistor.new(ModelSpaces.connection || ActiveRecord::Base.connection, ModelSpaces.table_name)
     end
 
   end
