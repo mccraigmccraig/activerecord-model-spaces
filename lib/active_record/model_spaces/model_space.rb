@@ -26,12 +26,12 @@ module ActiveRecord
       def register_model(model, opts={})
         ModelSpaces.check_model_registration_keys(opts.keys)
         opts[:history_versions] ||= 0
-        self.model_registrations[model] = opts
+        self.model_registrations[ModelSpace.model_key(model)] = opts
         self
       end
 
       def history_versions(model)
-        self.model_registrations[model][:history_versions]
+        self.model_registrations[ModelSpace.model_key(model)][:history_versions]
       end
 
       def registered_models
@@ -41,6 +41,13 @@ module ActiveRecord
       def create_context(model_space_key)
         ctx = Context.new(self, model_space_key, ModelSpaces.create_persistor)
       end
+
+      private
+
+      def self.model_key(model)
+        model.to_s
+      end
+
     end
 
     private

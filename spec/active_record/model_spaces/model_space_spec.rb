@@ -23,22 +23,24 @@ module ActiveRecord
         it "should register a model" do
           ms = ModelSpace.new(:foo)
           m = double("bar-model")
+          m.stub(:to_s).and_return("BarModel")
 
           r = ms.register_model(m)
           r.should == ms # registering a model returns the ModelSpace
 
-          r.registered_models.include?(m).should == true
+          r.registered_models.include?("BarModel").should == true
           r.history_versions(m).should == 0
         end
 
         it "should register a model with history_versions" do
           ms = ModelSpace.new(:foo)
           m = double("bar-model")
+          m.stub(:to_s).and_return("BarModel")
 
           r = ms.register_model(m, :history_versions=>3)
           r.should == ms # registering a model returns the ModelSpace
 
-          r.registered_models.include?(m).should == true
+          r.registered_models.include?("BarModel").should == true
           r.history_versions(m).should == 3
         end
       end
@@ -79,6 +81,15 @@ module ActiveRecord
         Persistor.should_receive(:new).with(c, "foo_model_spaces")
 
         ModelSpaces.create_persistor.should == p
+      end
+    end
+
+    describe "model_key" do
+      it "should stringify the model" do
+        m = double('model')
+        mk = double('model-key')
+        m.should_receive(:to_s).and_return(mk)
+        ModelSpace.model_key(m).should == mk
       end
     end
 
