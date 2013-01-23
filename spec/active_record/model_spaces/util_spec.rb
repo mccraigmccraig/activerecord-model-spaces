@@ -7,12 +7,12 @@ module ActiveRecord
 
     describe Util do
 
-      describe "model_name" do
+      describe "name_from_model" do
         it "should stringify the model" do
           m = double('model')
           mk = double('model-key')
           m.should_receive(:to_s).and_return(mk)
-          Util.model_name(m).should == mk
+          Util.name_from_model(m).should == mk
         end
 
       end

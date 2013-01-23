@@ -28,12 +28,12 @@ module ActiveRecord
       def register_model(model, opts={})
         ModelSpaces.check_model_registration_keys(opts.keys)
         opts[:history_versions] ||= 0
-        self.model_registrations[model_name(model)] = opts
+        self.model_registrations[name_from_model(model)] = opts
         self
       end
 
       def history_versions(model)
-        self.model_registrations[model_name(model)][:history_versions]
+        self.model_registrations[name_from_model(model)][:history_versions]
       end
 
       def registered_models

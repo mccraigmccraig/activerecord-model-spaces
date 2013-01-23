@@ -1,8 +1,11 @@
+require 'active_record/model_spaces/util'
+
 module ActiveRecord
   module ModelSpaces
 
     # manages ModelSpace persistence...
     class Persistor
+      include Util
 
       attr_reader :connection
       attr_reader :table_name
@@ -28,7 +31,8 @@ module ActiveRecord
         ActiveRecord::Base.transaction do
           old_model_versions = read_model_space_model_versions(model_space_name, model_space_key)
 
-          new_model_versions.map do |model_name, new_version|
+          new_model_versions.map do |model_or_name, new_version|
+            model_name = name_from_model(model_or_name)
             old_version = old_model_versions[model_name]
 
             if old_version && new_version && old_version != new_version && new_version != 0

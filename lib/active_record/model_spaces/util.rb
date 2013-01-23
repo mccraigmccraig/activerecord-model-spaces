@@ -5,7 +5,7 @@ module ActiveRecord
 
       module_function
 
-      def model_name(model)
+      def name_from_model(model)
         model.to_s
       end
 
