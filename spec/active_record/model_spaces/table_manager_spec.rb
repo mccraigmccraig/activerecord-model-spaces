@@ -18,6 +18,14 @@ module ActiveRecord
           tm.model.should == m
           tm.connection.should == c
         end
+
+        it "should initialize with a model name" do
+          c = double('connection')
+          ActiveRecord::ModelSpaces.should_receive(:connection).and_return(c)
+          tm = TableManager.new("ActiveRecord::ModelSpaces")
+          tm.model.should == ActiveRecord::ModelSpaces
+          tm.connection.should == c
+        end
       end
 
       def create_table_manager(model=nil)

@@ -9,8 +9,13 @@ module ActiveRecord
       attr_reader :connection
 
       def initialize(model)
-        @model = model
-        @connection = model.connection
+        if model.is_a?(String)
+          @model = eval(model)
+        else
+          @model = model
+        end
+
+        @connection = @model.connection
       end
 
       # create a new table with the same schema as the base_table, but a different name
