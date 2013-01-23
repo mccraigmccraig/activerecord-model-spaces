@@ -60,8 +60,11 @@ module ActiveRecord
       describe "next_version" do
         it "should return the next version" do
           TableNames.next_version(nil, nil).should == 0
+          TableNames.next_version(nil, 0).should == 0
+          TableNames.next_version(nil, 1).should == 0
 
           TableNames.next_version(0, nil).should == 0
+          TableNames.next_version(0, 0).should == 0
           TableNames.next_version(0, 1).should == 0
 
           TableNames.next_version(1, nil).should == 1
