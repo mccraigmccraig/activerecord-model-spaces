@@ -18,13 +18,13 @@ module ActiveRecord
       end
 
       def model_space_table_name(model_space_name, model_space_key, model)
-        if (!model_space_name || model_space_name.empty?) &&
-            (model_space_key && !model_space_key.empty?)
+        if (!model_space_name || model_space_name.to_s.empty?) &&
+            (model_space_key && !model_space_key.to_s.empty?)
           raise "model_space_key cannot be non-empty if model_space_name is empty"
         end
 
-        [ ("#{model_space_name}__" if model_space_name && !model_space_name.empty?),
-          ("#{model_space_key}__" if model_space_key && !model_space_key.empty?),
+        [ ("#{model_space_name}__" if model_space_name && !model_space_name.to_s.empty?),
+          ("#{model_space_key}__" if model_space_key && !model_space_key.to_s.empty?),
           base_table_name(model)].compact.join
       end
 
