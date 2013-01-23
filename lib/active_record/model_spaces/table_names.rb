@@ -1,13 +1,18 @@
 require 'active_support'
+require 'active_record/model_spaces/util'
 
 module ActiveRecord
   module ModelSpaces
     module TableNames
 
+      class << self
+        include Util
+      end
+
       module_function
 
       def base_table_name(model)
-        model.to_s.
+        name_from_model(model).
           instance_eval{|s| ActiveSupport::Inflector.underscore(s)}.
           instance_eval{|s| ActiveSupport::Inflector.pluralize(s)}
       end
