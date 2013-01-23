@@ -57,6 +57,15 @@ module ActiveRecord
         create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
       end
 
+      def create_context_with_two_models(im, um, attrs={})
+        im.stub(:to_s).and_return("Items")
+        um.stub(:to_s).and_return("Users")
+        ms = ModelSpace.new(:foo)
+        ms.register_model(im, :history_versions=>2)
+        ms.register_model(um, :history_versions=>1)
+        create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
+      end
+
       describe "base_table_name" do
         it "should return the base table_name" do
           ctx = create_context
@@ -83,7 +92,60 @@ module ActiveRecord
         end
       end
 
+      describe "current_table_name" do
+        it "should return the current_model_version based table_name" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx.should_receive(:table_name_from_model_version).with(im, 1)
+          ctx.current_table_name(im)
 
+          ctx.rspec_reset
+          ctx.send(:set_working_model_version, im, 2)
+          ctx.should_receive(:table_name_from_model_version).with(im,1)
+          ctx.current_table_name(im)
+        end
+      end
+
+      describe "next_table_name" do
+        it "should return the next version based table_name" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx.should_receive(:table_name_from_model_version).with(im, 2)
+          ctx.next_table_name(im)
+
+          ctx.rspec_reset
+          ctx.send(:set_working_model_version, im, 2)
+          ctx.should_receive(:table_name_from_model_version).with(im,2)
+          ctx.next_table_name(im)
+        end
+      end
+
+      describe "working_table_name" do
+        it "should return the next version based table name or nil if no working version has been registered " do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx.working_table_name(im).should == nil
+
+          ctx.rspec_reset
+          ctx.send(:set_working_model_version, im, 2)
+          ctx.should_receive(:table_name_from_model_version).with(im,2)
+          ctx.next_table_name(im)
+        end
+      end
+
+
+      describe "commit" do
+        it "should call the persistor with the merge of the current and working model versions" do
+          im = double('items-model')
+          um = double('users-model')
+          ctx = create_context_with_two_models(im, um, :model_space_key=>"one")
+          ctx.send(:set_working_model_version, um, 1)
+
+          ctx.persistor.should_receive(:update_model_space_model_versions).with({"Items"=>1, "Users"=>1})
+
+          ctx.commit
+        end
+      end
 
       describe "table_name_from_model_version" do
         it "should call the TableNames.table_name method" do
