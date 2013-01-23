@@ -1,20 +1,18 @@
+require 'active_record/model_spaces/util'
+
 module ActiveRecord
   module ModelSpaces
 
 
     # manages the creation and destruction of tables, and the bulk handling of data in those tables
     class TableManager
+      include Util
 
       attr_reader :model
       attr_reader :connection
 
       def initialize(model)
-        if model.is_a?(String)
-          @model = eval(model)
-        else
-          @model = model
-        end
-
+        @model = model_from_name(model)
         @connection = @model.connection
       end
 

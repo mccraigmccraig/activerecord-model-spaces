@@ -84,15 +84,6 @@ module ActiveRecord
       end
     end
 
-    describe "model_key" do
-      it "should stringify the model" do
-        m = double('model')
-        mk = double('model-key')
-        m.should_receive(:to_s).and_return(mk)
-        ModelSpace.model_key(m).should == mk
-      end
-    end
-
     describe "check_model_registration_keys" do
       it "should accept the history_versions key" do
         expect {

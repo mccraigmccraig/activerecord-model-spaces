@@ -2,6 +2,7 @@ require 'set'
 require 'active_support'
 require 'active_record/model_spaces/context'
 require 'active_record/model_spaces/persistor'
+require 'active_record/model_spaces/util'
 
 module ActiveRecord
   module ModelSpaces
@@ -14,6 +15,7 @@ module ActiveRecord
     # a ModelSpace has a set of models registered with it,
     # from which a Context can be created
     class ModelSpace
+      include Util
 
       attr_reader :name
       attr_reader :model_registrations
@@ -26,12 +28,12 @@ module ActiveRecord
       def register_model(model, opts={})
         ModelSpaces.check_model_registration_keys(opts.keys)
         opts[:history_versions] ||= 0
-        self.model_registrations[ModelSpace.model_key(model)] = opts
+        self.model_registrations[model_name(model)] = opts
         self
       end
 
       def history_versions(model)
-        self.model_registrations[ModelSpace.model_key(model)][:history_versions]
+        self.model_registrations[model_name(model)][:history_versions]
       end
 
       def registered_models
@@ -40,12 +42,6 @@ module ActiveRecord
 
       def create_context(model_space_key)
         ctx = Context.new(self, model_space_key, ModelSpaces.create_persistor)
-      end
-
-      private
-
-      def self.model_key(model)
-        model.to_s
       end
 
     end
