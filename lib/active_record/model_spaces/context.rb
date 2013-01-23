@@ -18,6 +18,10 @@ module ActiveRecord
         @model_space = model_space
         @model_space_key = model_space_key.to_sym
         @persistor = persistor
+        read_versions
+      end
+
+      def read_versions
         @current_model_versions = persistor.read_model_space_model_versions(model_space.name, model_space_key)
         @working_model_versions = {}
       end
@@ -58,20 +62,24 @@ module ActiveRecord
           current_version = get_current_model_version(model)
           next_version = TableNames.next_version(model_space.history_versions(model), current_version)
 
+          tm = TableManager.new(model)
           if next_version != current_version
             ok = false
             begin
-              tm = TableManager.new(model)
-              tm.recreate_table(base_table_name(model), next_table_name(model))
-              tm.copy_table(current_table_name(model), next_table_name(model)) if copy_old_version
+              btn = base_table_name(model)
+              ctn = current_table_name(model)
+              ntn = next_table_name(model)
+              tm.recreate_table(btn, ntn)
+              tm.copy_table(ctn, ntn) if copy_old_version
               set_working_model_version(model, next_version)
-              block.call
+              r = block.call
               ok = true
+              r
             ensure
               delete_working_model_versions(model) if !ok
             end
-
-          else
+          else # no history
+            tm.truncate_table(next_table_name(model)) if !copy_old_version
             block.call # nothing to do
           end
         end
@@ -83,6 +91,8 @@ module ActiveRecord
 
       # copy all data to the base model-space tables and drop all history tables
       def hoover
+        raise "can't hoover with active working versions: #{working_model_versions.keys.inspect}" if !working_model_versions.empty?
+
         versions = read_model_space_model_versions(model_space_name, prefix)
 
         ActiveRecord::Base.transaction do
@@ -96,9 +106,16 @@ module ActiveRecord
                                        tm.copy_table(current_name,base_name)
                                      end
 
+                                     [1...model_space.history_versions(model)].map do |v|
+                                       htn = table_name_from_model_version(model, v)
+                                       tm.drop_table(htn)
+                                     end
+
                                      [model, 0]
                                    end)
           persistor.update_model_space_model_versions(new_versions)
+
+          read_versions
         end
       end
 

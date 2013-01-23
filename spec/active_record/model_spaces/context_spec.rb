@@ -11,11 +11,11 @@ module ActiveRecord
 
         it "should initialize with a model_space, model_space_key and persistor" do
           ms = double('model-space')
-          ms.stub(:name).and_return('foo_space')
+          ms.stub(:name).and_return(:foo_space)
 
           p = double('persistor')
           v = {"Items"=>1, "Users"=>2}
-          p.should_receive(:read_model_space_model_versions).with('foo_space', 'one').and_return(v)
+          p.should_receive(:read_model_space_model_versions).with(:foo_space, :one).and_return(v)
 
           c = Context.new(ms, 'one', p)
           c.model_space.should == ms
@@ -37,7 +37,7 @@ module ActiveRecord
         end
 
         if attrs[:model_space_key]
-          msk = attrs[:model_space_key]
+          msk = attrs[:model_space_key].to_sym
         else
           msk = double('model-space-key')
           msk.stub(:to_sym).and_return(msk)
@@ -133,6 +133,52 @@ module ActiveRecord
         end
       end
 
+      describe "new_version" do
+        it "should just call the block if the model already has a working version" do
+
+        end
+
+        it "should truncate the table and call the block if the model has no history versions and !copy_old_version" do
+
+        end
+
+        it "should just call the block if the model has no history versions and copy_old_version" do
+
+        end
+
+        it "should recreate the next_version table, set the working version and call the block if !copy_old_version" do
+
+        end
+
+        it "should recreate the next_version table, set the working version, copy the previous version data and call the block if copy_old_version" do
+
+        end
+      end
+
+      describe "hoover" do
+        it "should bork if there are any working versions" do
+
+        end
+
+        it "should copy models to their base table, drop history tables and re-read model-versions" do
+
+        end
+      end
+
+      describe "updated_version" do
+        it "should call new_version with the copy_old_version flat set to true returning the result of the block" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+
+          ctx.should_receive(:new_version).and_return do |model, copy_old_version, &block|
+            model.should == im
+            copy_old_version.should == true
+            block.call
+          end
+
+          ctx.updated_version(im) { :result }.should == :result
+        end
+      end
 
       describe "commit" do
         it "should call the persistor with the merge of the current and working model versions" do
