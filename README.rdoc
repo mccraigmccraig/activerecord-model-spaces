@@ -2,6 +2,8 @@
 
 {<img src="https://travis-ci.org/mccraigmccraig/activerecord-model-spaces.png?branch=master" alt="Build Status" />}[https://travis-ci.org/mccraigmccraig/activerecord-model-spaces]
 
+{<img src="https://codeclimate.com/badge.png" alt="Code Climate"/>}[https://codeclimate.com/github/mccraigmccraig/activerecord-model-spaces]
+
 provides a means of contextually associating sets of ActiveRecord models with database tables
 
 
