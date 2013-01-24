@@ -36,7 +36,7 @@ module ActiveRecord
         get_model_registration(model)[:history_versions]
       end
 
-      def registered_models
+      def registered_model_keys
         self.model_registrations.keys
       end
 

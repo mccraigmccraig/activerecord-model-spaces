@@ -103,6 +103,15 @@ module ActiveRecord
         end
       end
 
+      describe "hoovered_table_name" do
+        it "should return the table_name for the model with version 0" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          TableNames.should_receive(:table_name).with(:foo, :one, im, 2, 0)
+          ctx.hoovered_table_name(im)
+        end
+      end
+
       describe "current_table_name" do
         it "should return the current_model_version based table_name" do
           im = double('items-model')
@@ -202,14 +211,17 @@ module ActiveRecord
 
           ctx.table_name(im).should == 'foo__one__items__1'
           ctx.new_version(im){:result}.should == :result
+          ctx.send(:get_working_model_version, im).should == 2
           ctx.table_name(im).should == 'foo__one__items__2'
 
           ctx.table_name(um).should == 'foo__one__users'
           ctx.new_version(um){:um_result}.should == :um_result
+          ctx.send(:get_working_model_version, um).should == 1
           ctx.table_name(um).should == 'foo__one__users__1'
 
           ctx.table_name(om).should == 'foo__one__others'
           ctx.new_version(om){:om_result}.should == :om_result
+          ctx.send(:get_working_model_version, om).should == 0
           ctx.table_name(om).should == 'foo__one__others'
         end
 
@@ -236,18 +248,36 @@ module ActiveRecord
 
           ctx.table_name(im).should == 'foo__one__items__1'
           ctx.new_version(im, true){:result}.should == :result
+          ctx.send(:get_working_model_version, im).should == 2
           ctx.table_name(im).should == 'foo__one__items__2'
 
           ctx.table_name(um).should == 'foo__one__users'
           ctx.new_version(um, true){:um_result}.should == :um_result
+          ctx.send(:get_working_model_version, um).should == 1
           ctx.table_name(um).should == 'foo__one__users__1'
 
           ctx.table_name(om).should == 'foo__one__others'
           ctx.new_version(om, true){:om_result}.should == :om_result
+          ctx.send(:get_working_model_version, om).should == 0
           ctx.table_name(om).should == 'foo__one__others'
         end
 
         it "should remove the working version if the supplied block borks" do
+          im = double('items-model')
+          um = double('users-model')
+          om = double('others-model')
+
+          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+
+          imtm = double('im-table-manager')
+          TableManager.stub(:new).with(im).and_return(imtm)
+          imtm.should_receive(:recreate_table).with('items', 'foo__one__items__2')
+
+          ctx.table_name(im).should == 'foo__one__items__1'
+          expect{
+            ctx.new_version(im){raise "blah"}
+          }.to raise_error /blah/
+          ctx.table_name(im).should == 'foo__one__items__1'
 
         end
 
@@ -263,10 +293,44 @@ module ActiveRecord
 
       describe "hoover" do
         it "should bork if there are any working versions" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx.send(:set_working_model_version, im, 2)
 
+          expect {
+            ctx.hoover
+          }.to raise_error /can\'t hoover with active working versions/
         end
 
         it "should copy models to their base table, drop history tables and re-read model-versions" do
+          im = double('items-model')
+          um = double('users-model')
+          om = double('others-model')
+
+          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+
+          imtm = double('im-table-manager')
+          TableManager.stub(:new).with(im).and_return(imtm)
+          TableManager.stub(:new).with("Items").and_return(imtm)
+          imtm.should_receive(:recreate_table).with('items', 'foo__one__items')
+          imtm.should_receive(:copy_table).with('foo__one__items__1', 'foo__one__items')
+          imtm.should_receive(:drop_table).with('foo__one__items__1')
+          imtm.should_receive(:drop_table).with('foo__one__items__2')
+
+          umtm = double('um-table-manager')
+          TableManager.stub(:new).with(um).and_return(umtm)
+          TableManager.stub(:new).with("Users").and_return(umtm)
+          umtm.should_receive(:drop_table).with('foo__one__users__1')
+
+          omtm = double('om-table-manager')
+          TableManager.stub(:new).with(om).and_return(omtm)
+          TableManager.stub(:new).with("Others").and_return(omtm)
+
+          ctx.persistor.should_receive(:update_model_space_model_versions).with("Items"=>0, "Users"=>0, "Others"=>0)
+          ctx.should_receive(:read_versions)
+
+
+          ctx.hoover
 
         end
       end

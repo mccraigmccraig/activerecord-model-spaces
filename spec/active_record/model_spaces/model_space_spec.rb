@@ -28,7 +28,7 @@ module ActiveRecord
           r = ms.register_model(m)
           r.should == ms # registering a model returns the ModelSpace
 
-          r.registered_models.include?("BarModel").should == true
+          r.registered_model_keys.include?("BarModel").should == true
           r.history_versions(m).should == 0
         end
 
@@ -40,7 +40,7 @@ module ActiveRecord
           r = ms.register_model(m, :history_versions=>3)
           r.should == ms # registering a model returns the ModelSpace
 
-          r.registered_models.include?("BarModel").should == true
+          r.registered_model_keys.include?("BarModel").should == true
           r.history_versions(m).should == 3
         end
       end
