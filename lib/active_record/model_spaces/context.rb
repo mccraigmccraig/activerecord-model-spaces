@@ -56,6 +56,7 @@ module ActiveRecord
       end
 
       def new_version(model, copy_old_version=false, &block)
+        raise "new_version: a block must be supplied" if !block
 
         if get_working_model_version(model)
           block.call # nothing to do

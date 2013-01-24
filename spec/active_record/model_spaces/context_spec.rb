@@ -182,11 +182,52 @@ module ActiveRecord
         end
 
         it "should recreate the next_version table, set the working version and call the block if !copy_old_version" do
+          im = double('items-model')
+          um = double('users-model')
+          om = double('others-model')
 
+          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+
+          imtm = double('im-table-manager')
+          TableManager.stub(:new).with(im).and_return(imtm)
+          imtm.should_receive(:recreate_table).with('items', 'foo__one__items__2')
+
+          umtm = double('um-table-manager')
+          TableManager.stub(:new).with(um).and_return(umtm)
+          umtm.should_receive(:recreate_table).with('users', 'foo__one__users__1')
+
+          omtm = double('om-table-manager')
+          TableManager.stub(:new).with(om).and_return(omtm)
+          omtm.should_receive(:truncate_table).with('foo__one__others')
+
+          ctx.table_name(im).should == 'foo__one__items__1'
+          ctx.new_version(im){:result}.should == :result
+          ctx.table_name(im).should == 'foo__one__items__2'
+
+          ctx.table_name(um).should == 'foo__one__users'
+          ctx.new_version(um){:um_result}.should == :um_result
+          ctx.table_name(um).should == 'foo__one__users__1'
+
+          ctx.table_name(om).should == 'foo__one__others'
+          ctx.new_version(om){:om_result}.should == :om_result
+          ctx.table_name(om).should == 'foo__one__others'
         end
 
         it "should recreate the next_version table, set the working version, copy the previous version data and call the block if copy_old_version" do
 
+        end
+
+        it "should remove the working version if the supplied block borks" do
+
+        end
+
+        it "should bork if a block is not supplied" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+
+          expect {
+            ctx.new_version(im)
+          }.to raise_error /a block must be supplied/
         end
       end
 
@@ -255,6 +296,22 @@ module ActiveRecord
           ctx.send(:get_working_model_version, im).should == 2
           ctx.send(:delete_working_model_version, im)
           ctx.send(:get_working_model_version, im).should == nil
+        end
+
+        it "should bork if called with an unregistered model" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+
+          rm = double('random-model')
+
+          expect {
+            ctx.send(:get_current_model_version, rm)
+          }.to raise_error /not registered with ModelSpace/
+
+          expect {
+            ctx.send(:get_working_model_version, rm)
+          }.to raise_error /not registered with ModelSpace/
+
         end
       end
 
