@@ -32,6 +32,14 @@ module ActiveRecord
         REGISTRY.table_name(self)
       end
 
+      def current_table_name
+        REGISTRY.current_table_name(self)
+      end
+
+      def working_table_name
+        REGISTRY.working_table_name(self)
+      end
+
       # create a new version of the model
       def new_version(&block)
         REGISTRY.new_version(self, &block)

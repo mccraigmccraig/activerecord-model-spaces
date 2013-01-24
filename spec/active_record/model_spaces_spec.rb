@@ -23,6 +23,18 @@ module ActiveRecord
       klass.table_name.should == "foos"
     end
 
+    it "should pass current_table_name calls to the registry" do
+      klass = create_model_spaces_class
+      ModelSpaces::REGISTRY.should_receive(:current_table_name).with(klass).and_return("foos")
+      klass.current_table_name.should == "foos"
+    end
+
+    it "should pass working_table_name calls to the registry" do
+      klass = create_model_spaces_class
+      ModelSpaces::REGISTRY.should_receive(:working_table_name).with(klass).and_return("foos")
+      klass.working_table_name.should == "foos"
+    end
+
     it "should pass new_version calls to the registry" do
       klass = create_model_spaces_class
       ModelSpaces::REGISTRY.should_receive(:new_version).with(klass).and_return do |k, &proc|

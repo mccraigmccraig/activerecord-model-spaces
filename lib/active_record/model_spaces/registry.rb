@@ -26,6 +26,14 @@ module ActiveRecord
         get_context_for_model(model).table_name(model)
       end
 
+      def current_table_name(model)
+        get_context_for_model(model).current_table_name(model)
+      end
+
+      def working_table_name(model)
+        get_context_for_model(model).working_table_name(model)
+      end
+
       # create a new version of the model
       def new_version(model, &block)
         get_context_for_model(model).new_version(model, &block)
@@ -44,20 +52,21 @@ module ActiveRecord
       # only a single context can be active for a given ModelSpace at
       # any time, though different contexts can be active for
       # different ModelSpaces
-      def with_model_space_context(model_space_name, prefix, &block)
+      def with_model_space_context(model_space_name, model_space_key, &block)
 
         ms = get_model_space(model_space_name)
         raise "no such model space: #{model_space_name}" if !ms
 
         old_merged_context = nil
-        ctx = ms.create_context(prefix)
+        ctx = ms.create_context(model_space_key)
         self.context_stack << ctx
         begin
           old_merged_context = @merged_context
           @merged_context = merge_context_stack
 
-          block.call
+          r = block.call
           ctx.commit
+          r
         ensure
           context_stack.pop
           @merged_context = old_merged_context
