@@ -41,10 +41,6 @@ module ActiveRecord
 
       module_function
 
-      def is_versioned?(history_versions)
-        history_versions && history_versions > 0
-      end
-
       def version(history_versions, v)
         (v || 0) % ((history_versions || 0) + 1)
       end
