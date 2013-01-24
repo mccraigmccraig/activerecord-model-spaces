@@ -28,22 +28,35 @@ module ActiveRecord
       def register_model(model, opts={})
         ModelSpaces.check_model_registration_keys(opts.keys)
         opts[:history_versions] ||= 0
-        self.model_registrations[name_from_model(model)] = opts
+        set_model_registration(model, opts)
         self
       end
 
       def history_versions(model)
-        self.model_registrations[name_from_model(model)][:history_versions]
+        get_model_registration(model)[:history_versions]
       end
 
       def registered_models
         self.model_registrations.keys
       end
 
+      def is_registered?(model)
+        !!get_model_registration(model)
+      end
+
       def create_context(model_space_key)
         ctx = Context.new(self, model_space_key, ModelSpaces.create_persistor)
       end
 
+      private
+
+      def get_model_registration(model)
+        self.model_registrations[name_from_model(model)]
+      end
+
+      def set_model_registration(model, registration)
+        self.model_registrations[name_from_model(model)] = registration
+      end
     end
 
     private

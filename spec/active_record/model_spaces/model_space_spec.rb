@@ -45,6 +45,28 @@ module ActiveRecord
         end
       end
 
+      describe "is_registered?" do
+        it "should return true if a model is registered, false otherwise" do
+          ms = ModelSpace.new(:foo)
+          m = double('bar-model')
+          m.stub(:to_s).and_return("BarModel")
+
+          m2 = double('baz-model')
+          m2.stub(:to_s).and_return('BazModel')
+
+          ms.register_model(m)
+          ms.is_registered?(m).should == true
+
+          ms.is_registered?(m2).should == false
+        end
+      end
+
+      describe "history_versions" do
+        it "should retrieve the registered history version for a model" do
+
+        end
+      end
+
       describe "create_context" do
 
         it "should create a new context with a persistor" do
