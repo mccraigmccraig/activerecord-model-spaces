@@ -214,7 +214,37 @@ module ActiveRecord
         end
 
         it "should recreate the next_version table, set the working version, copy the previous version data and call the block if copy_old_version" do
+          im = double('items-model')
+          um = double('users-model')
+          om = double('others-model')
 
+          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+
+          imtm = double('im-table-manager')
+          TableManager.stub(:new).with(im).and_return(imtm)
+          imtm.should_receive(:recreate_table).with('items', 'foo__one__items__2')
+          imtm.should_receive(:copy_table).with('foo__one__items__1', 'foo__one__items__2')
+
+          umtm = double('um-table-manager')
+          TableManager.stub(:new).with(um).and_return(umtm)
+          umtm.should_receive(:recreate_table).with('users', 'foo__one__users__1')
+          umtm.should_receive(:copy_table).with('foo__one__users', 'foo__one__users__1')
+
+          omtm = double('om-table-manager')
+          TableManager.stub(:new).with(om).and_return(omtm)
+          omtm.should_not_receive(:truncate_table)
+
+          ctx.table_name(im).should == 'foo__one__items__1'
+          ctx.new_version(im, true){:result}.should == :result
+          ctx.table_name(im).should == 'foo__one__items__2'
+
+          ctx.table_name(um).should == 'foo__one__users'
+          ctx.new_version(um, true){:um_result}.should == :um_result
+          ctx.table_name(um).should == 'foo__one__users__1'
+
+          ctx.table_name(om).should == 'foo__one__others'
+          ctx.new_version(om, true){:om_result}.should == :om_result
+          ctx.table_name(om).should == 'foo__one__others'
         end
 
         it "should remove the working version if the supplied block borks" do
