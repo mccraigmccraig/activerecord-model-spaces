@@ -1,4 +1,5 @@
 require 'active_record/model_spaces/table_names'
+require 'active_record/model_spaces/table_manager'
 require 'active_record/model_spaces/util'
 
 module ActiveRecord
@@ -76,7 +77,7 @@ module ActiveRecord
               ok = true
               r
             ensure
-              delete_working_model_versions(model) if !ok
+              delete_working_model_version(model) if !ok
             end
           else # no history
             tm.truncate_table(next_table_name(model)) if !copy_old_version
@@ -131,10 +132,12 @@ module ActiveRecord
       end
 
       def get_current_model_version(model)
-        self.current_model_versions[name_from_model(model)]
+        raise "#{model}: not registered with ModelSpace: #{model_space.name}" if !model_space.is_registered?(model)
+        self.current_model_versions[name_from_model(model)] || 0
       end
 
       def get_working_model_version(model)
+        raise "#{model}: not registered with ModelSpace: #{model_space.name}" if !model_space.is_registered?(model)
         self.working_model_versions[name_from_model(model)]
       end
 

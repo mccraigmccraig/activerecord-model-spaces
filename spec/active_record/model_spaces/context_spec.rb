@@ -66,6 +66,17 @@ module ActiveRecord
         create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
       end
 
+      def create_context_with_three_models(im, um, om, attrs={})
+        im.stub(:to_s).and_return("Items")
+        um.stub(:to_s).and_return("Users")
+        om.stub(:to_s).and_return("Others")
+        ms = ModelSpace.new(:foo)
+        ms.register_model(im, :history_versions=>2)
+        ms.register_model(um, :history_versions=>1)
+        ms.register_model(om, :history_versions=>0)
+        create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
+      end
+
       describe "base_table_name" do
         it "should return the base table_name" do
           ctx = create_context
@@ -135,15 +146,39 @@ module ActiveRecord
 
       describe "new_version" do
         it "should just call the block if the model already has a working version" do
+          im = double('items-model')
+          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx.send(:set_working_model_version, im, 2)
+          ctx.send(:get_current_model_version, im).should == 1
+          ctx.send(:get_working_model_version, im).should == 2
 
+          TableManager.should_not_receive(:new)
+
+          r = ctx.new_version(im){ :result }
+          r.should == :result
         end
 
         it "should truncate the table and call the block if the model has no history versions and !copy_old_version" do
+          om = double('others-model')
+          ctx = create_context_with_three_models(double('items-model'), double('users-model'), om, :model_space_key=>"one")
 
+          tm = double('table-manager')
+          TableManager.stub(:new).and_return(tm)
+          tm.should_receive(:truncate_table).with("foo__one__others")
+
+          r = ctx.new_version(om){ :result }
+          r.should == :result
         end
 
         it "should just call the block if the model has no history versions and copy_old_version" do
+          om = double('others-model')
+          ctx = create_context_with_three_models(double('items-model'), double('users-model'), om, :model_space_key=>"one")
 
+          tm = double('table-manager')
+          TableManager.stub(:new).and_return(tm)
+
+          r = ctx.new_version(om, true){ :result }
+          r.should == :result
         end
 
         it "should recreate the next_version table, set the working version and call the block if !copy_old_version" do
