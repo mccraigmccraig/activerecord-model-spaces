@@ -4,6 +4,32 @@ module ActiveRecord
   module ModelSpaces
     describe Registry do
 
+      describe "context_stack" do
+        it "should retrieve the context-stack from a Thread local" do
+          cs = double('context-stack')
+          Thread.current.should_receive("[]").with(Registry::CONTEXT_STACK_KEY).and_return(cs)
+
+          r = Registry.new
+          r.send(:context_stack).should == cs
+        end
+
+        it "should initialise the context-stack if necessary" do
+          Thread.current.should_receive('[]=').with(Registry::CONTEXT_STACK_KEY, []).and_return([])
+          r = Registry.new
+          r.send(:context_stack).should == []
+        end
+      end
+
+      describe "merged_context" do
+        it "should retrieve the merged-context from a Thread local" do
+          mc = double('merged-context')
+          Thread.current.should_receive("[]").with(Registry::MERGED_CONTEXT_KEY).and_return(mc)
+
+          r = Registry.new
+          r.send(:merged_context).should == mc
+        end
+      end
+
       describe "register_model" do
         it "should register a model" do
           r = Registry.new
@@ -99,8 +125,8 @@ module ActiveRecord
           ms.should_receive(:create_context).with("moar_foos").and_return(ctx)
 
           r.with_model_space_context(:foo_space, "moar_foos") do
-            r.context_stack.last.should == ctx
-            r.merged_context[:foo_space].should == ctx
+            r.send(:context_stack).last.should == ctx
+            r.send(:merged_context)[:foo_space].should == ctx
             :result
           end.should == :result
         end
@@ -151,17 +177,17 @@ module ActiveRecord
           bms.should_receive(:create_context).with("moar_bars").and_return(bctx)
 
           r.with_model_space_context(:foo_space, "moar_foos") do
-            r.context_stack.last.should == fctx
-            r.merged_context.should == {:foo_space=>fctx}
+            r.send(:context_stack).last.should == fctx
+            r.send(:merged_context).should == {:foo_space=>fctx}
 
             r.with_model_space_context(:bar_space, "moar_bars") do
-              r.context_stack.last.should == bctx
-              r.merged_context.should == {:foo_space=>fctx, :bar_space=>bctx}
+              r.send(:context_stack).last.should == bctx
+              r.send(:merged_context).should == {:foo_space=>fctx, :bar_space=>bctx}
               :inner_result
             end.should == :inner_result
 
-            r.context_stack.last.should == fctx
-            r.merged_context.should == {:foo_space=>fctx}
+            r.send(:context_stack).last.should == fctx
+            r.send(:merged_context).should == {:foo_space=>fctx}
             :outer_result
           end.should == :outer_result
 

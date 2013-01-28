@@ -8,11 +8,8 @@ module ActiveRecord
 
       attr_reader :model_spaces
       attr_reader :model_spaces_by_models
-      attr_reader :context_stack
-      attr_reader :merged_context
 
       def initialize
-        @context_stack = []
         @model_spaces = {}
         @model_spaces_by_models = {}
       end
@@ -49,27 +46,25 @@ module ActiveRecord
       end
 
       # execute a block with a ModelSpace context.
-      # only a single context can be active for a given ModelSpace at
-      # any time, though different contexts can be active for
-      # different ModelSpaces
+      # only a single context can be active for a given ModelSpace on any Thread at
+      # any time, though different ModelSpaces may have active contexts concurrently
       def with_model_space_context(model_space_name, model_space_key, &block)
 
         ms = get_model_space(model_space_name)
         raise "no such model space: #{model_space_name}" if !ms
 
-        old_merged_context = nil
+        old_merged_context = self.send(:merged_context)
         ctx = ms.create_context(model_space_key)
-        self.context_stack << ctx
+        context_stack << ctx
         begin
-          old_merged_context = @merged_context
-          @merged_context = merge_context_stack
+          self.merged_context = merge_context_stack
 
           r = block.call
           ctx.commit
           r
         ensure
           context_stack.pop
-          @merged_context = old_merged_context
+          self.merged_context = old_merged_context
         end
       end
 
@@ -97,6 +92,22 @@ module ActiveRecord
         model_spaces_by_models[model_key(model)]
       end
 
+      CONTEXT_STACK_KEY = "ActiveRecord::ModelSpaces.context_stack"
+
+      def context_stack
+        Thread.current[CONTEXT_STACK_KEY] ||= []
+      end
+
+      MERGED_CONTEXT_KEY = "ActiveRecord::ModelSpaces.merged_context"
+
+      def merged_context
+        Thread.current[MERGED_CONTEXT_KEY]
+      end
+
+      def merged_context=(mc)
+        Thread.current[MERGED_CONTEXT_KEY] = mc
+      end
+
       # merge all entries in the context stack into a map
       def merge_context_stack
         context_stack.reduce({}) do |m, ctx|
@@ -110,7 +121,7 @@ module ActiveRecord
         ms = get_model_space_for_model(model)
         raise "#{model.to_s} is not registered to any ModelSpace" if !ms
         raise "ModelSpace: '#{ms.name}' has no current context" if !merged_context
-        ctx = self.merged_context[ms.name]
+        ctx = merged_context[ms.name]
         raise "ModelSpace: '#{ms.name}' has no current context" if !ctx
         ctx
       end
