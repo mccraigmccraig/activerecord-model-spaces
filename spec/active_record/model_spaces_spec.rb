@@ -3,6 +3,20 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 module ActiveRecord
   describe ModelSpaces do
 
+    describe "with_model_spaces_context" do
+      it "should pass with_model_space_context calls to the registry" do
+        ModelSpaces::REGISTRY.should_receive(:with_model_space_context).and_return do |model_space_name, model_space_key, &block|
+          model_space_name.should == :foo_space
+          model_space_key.should == :one
+          block.call
+        end
+
+        ModelSpaces.with_model_space_context(:foo_space, :one) do
+          :result
+        end.should == :result
+      end
+    end
+
     def create_model_spaces_class
       klass = Class.new
       class << klass

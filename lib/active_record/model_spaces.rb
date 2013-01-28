@@ -21,6 +21,12 @@ module ActiveRecord
       end
     end
 
+    module_function
+
+    def with_model_space_context(model_space_name, model_space_key, &block)
+      REGISTRY.with_model_space_context(model_space_name, model_space_key, &block)
+    end
+
     module ClassMethods
 
       # register a model as belonging to a model space
