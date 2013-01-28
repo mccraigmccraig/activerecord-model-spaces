@@ -267,7 +267,7 @@ module ActiveRecord
 
           expect {
             r.send(:get_context_for_model, m)
-          }.to raise_error /foo_space has no current context/
+          }.to raise_error /ModelSpace: 'foo_space' has no current context/
         end
 
         it "should return the registered context for the model's ModelSpace" do

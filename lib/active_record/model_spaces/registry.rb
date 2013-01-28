@@ -109,9 +109,9 @@ module ActiveRecord
       def get_context_for_model(model)
         ms = get_model_space_for_model(model)
         raise "#{model.to_s} is not registered to any ModelSpace" if !ms
-        raise "#{ms.name} has no current context" if !merged_context
+        raise "ModelSpace: '#{ms.name}' has no current context" if !merged_context
         ctx = self.merged_context[ms.name]
-        raise "#{ms.name} has no current context" if !ctx
+        raise "ModelSpace: '#{ms.name}' has no current context" if !ctx
         ctx
       end
     end
