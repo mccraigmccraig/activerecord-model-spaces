@@ -19,9 +19,7 @@ module ActiveRecord
       # create a new table with the same schema as the base_table, but a different name
       def create_table(base_table_name, table_name)
         if table_name != base_table_name
-          base_table_schema = table_schema(base_table_name)
-          table_schema = change_table_name(base_table_name, table_name, base_table_schema)
-          connection.instance_eval(table_schema)
+          get_table_schema_copier(connection).copy_table_schema(connection, base_table_name, table_name)
         end
       end
 
@@ -50,8 +48,56 @@ module ActiveRecord
 
       private
 
+      TABLE_SCHEMA_COPIERS = {}
+
+      def get_table_schema_copier(connection)
+        adapter_name = connection.adapter_name
+
+        if !TABLE_SCHEMA_COPIERS[adapter_name]
+          klassname = "ActiveRecord::ModelSpaces::#{adapter_name}TableSchemaCopier"
+          klass = class_from_classname(klassname)
+          if klass
+            TABLE_SCHEMA_COPIERS[adapter_name] = klass
+          else
+            TABLE_SCHEMA_COPIERS[adapter_name] = DefaultTableSchemaCopier
+          end
+        end
+
+        TABLE_SCHEMA_COPIERS[adapter_name]
+      end
+
+    end
+
+    module MySQLTableSchemaCopier
+      module_function
+
+      def copy_table_schema(connection, from_table_name, to_table_name)
+        from_table_schema = table_schema(connection, from_table_name)
+        to_table_schema = change_table_name(from_table_name, to_table_name, from_table_schema)
+        connection.execute(to_table_schema)
+      end
+
+      def table_schema(connection, table_name)
+        connection.select_value("SHOW CREATE TABLE `#{table_name}`")
+      end
+
+      def change_table_name(from_table_name, to_table_name, schema)
+        schema.
+          gsub(/CREATE TABLE `#{from_table_name}`/, "CREATE TABLE `#{to_table_name}`")
+      end
+    end
+
+    module DefaultTableSchemaCopier
+      module_function
+
+      def copy_table_schema(connection, from_table_name, to_table_name)
+        from_table_schema = table_schema(connection, from_table_name)
+        to_table_schema = change_table_name(from_table_name, to_table_name, from_table_schema)
+        connection.instance_eval(to_table_schema)
+      end
+
       # retrieve a schema.rb fragment pertaining to the table called table_name. uses a private Rails API
-      def table_schema(table_name)
+      def table_schema(connection, table_name)
         ActiveRecord::SchemaDumper.send(:new, connection).send(:table, table_name, StringIO.new).string
       end
 

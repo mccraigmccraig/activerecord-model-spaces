@@ -38,11 +38,11 @@ module ActiveRecord
       describe "create table" do
         it "should extract the base_table schema, and use it to create a new table" do
           tm = create_table_manager
-          bts = double('base-table-schema')
-          tm.should_receive(:table_schema).and_return(bts)
-          ts = double('table-schema')
-          tm.should_receive(:change_table_name).with('foos', 'bars', bts).and_return(ts)
-          tm.connection.should_receive(:instance_eval).with(ts)
+
+          tsc = double('table-schema-copier')
+          tm.should_receive(:get_table_schema_copier).with(tm.connection).and_return(tsc)
+
+          tsc.should_receive(:copy_table_schema).with(tm.connection, 'foos', 'bars')
 
           tm.create_table('foos', 'bars')
         end
@@ -98,25 +98,80 @@ module ActiveRecord
         end
       end
 
-      describe "table_schema" do
-        it "should use the schema dumper to retrieve ruby code to create a table" do
-          tm = create_table_manager
+      describe "get_table_schema_copier" do
+        it "should get a TableSchemaCopier specialised for the connection adapter, if available" do
+          c = double('connection')
+          c.stub(:adapter_name)
+        end
 
-          sd = double('schema-dumper')
-          ActiveRecord::SchemaDumper.should_receive(:new).with(tm.connection).and_return(sd)
+        it "should get a DefaultTableSchemaCopier if no specialised TableSchemaCopier available" do
 
-          sd.should_receive(:table).with('foos', anything).and_return(StringIO.new('create_table "foos" ()'))
-
-          tm.send(:table_schema, "foos").should == 'create_table "foos" ()'
         end
       end
 
-      describe "change_table_name" do
-        it "should alter the provided schema generating code to change the table_name" do
-          tm = create_table_manager
-          tm.send(:change_table_name, "foos", "bars", 'create_table "foos" (blahblah)\nadd_index "foos" blahblah').should ==
-            'create_table "bars" (blahblah)\nadd_index "bars" blahblah'
+      describe MySQLTableSchemaCopier do
+
+        describe "copy_table_schema" do
+          it "should ask mysql for the create-table statement, modify it and execute the modified statement" do
+            c = double('connection')
+            c.should_receive(:select_value).with("SHOW CREATE TABLE `foos`").and_return("CREATE TABLE `foos` (blah)")
+            c.should_receive(:execute).with("CREATE TABLE `bars` (blah)")
+
+            MySQLTableSchemaCopier.copy_table_schema(c, "foos", "bars")
+          end
         end
+
+        describe "table_schema" do
+          it "should ask mysql for the create-table statement for the table" do
+            c = double('connection')
+            c.should_receive(:select_value).with("SHOW CREATE TABLE `foos`")
+            MySQLTableSchemaCopier.table_schema(c, "foos")
+          end
+        end
+
+        describe "change_table_name" do
+          it "should change the table name in the CREATE TABLE statement" do
+            MySQLTableSchemaCopier.change_table_name('foos', 'bars', "CREATE TABLE `foos` (blah)").should ==
+              "CREATE TABLE `bars` (blah)"
+          end
+        end
+
+      end
+
+      describe DefaultTableSchemaCopier do
+
+        describe "copy_table_schema" do
+          it "should extract ruby schema, modify and eval it to create a new table"  do
+            c = double('connection')
+            c.should_receive(:instance_eval).with('create_table "bars" ()')
+
+            DefaultTableSchemaCopier.should_receive(:table_schema).with(c, "foos").and_return('create_table "foos" ()')
+
+            DefaultTableSchemaCopier.copy_table_schema(c, "foos", "bars")
+          end
+        end
+
+        describe "table_schema" do
+          it "should use the schema dumper to retrieve ruby code to create a table" do
+            c = double('connection')
+
+            sd = double('schema-dumper')
+            ActiveRecord::SchemaDumper.should_receive(:new).with(c).and_return(sd)
+
+            sd.should_receive(:table).with('foos', anything).and_return(StringIO.new('create_table "foos" ()'))
+
+            DefaultTableSchemaCopier.table_schema(c, "foos").should == 'create_table "foos" ()'
+          end
+        end
+
+        describe "change_table_name" do
+          it "should alter the provided schema generating code to change the table_name" do
+            tm = create_table_manager
+            DefaultTableSchemaCopier.change_table_name( "foos", "bars", 'create_table "foos" (blahblah)\nadd_index "foos" blahblah').should ==
+              'create_table "bars" (blahblah)\nadd_index "bars" blahblah'
+          end
+        end
+
       end
     end
   end
