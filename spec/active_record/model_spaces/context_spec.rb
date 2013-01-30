@@ -357,7 +357,7 @@ module ActiveRecord
           ctx = create_context_with_two_models(im, um, :model_space_key=>"one")
           ctx.send(:set_working_model_version, um, 1)
 
-          ctx.persistor.should_receive(:update_model_space_model_versions).with({"Items"=>1, "Users"=>1})
+          ctx.persistor.should_receive(:update_model_space_model_versions).with(ctx.model_space.name, :one, {"Items"=>1, "Users"=>1})
 
           ctx.commit
         end

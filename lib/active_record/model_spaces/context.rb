@@ -128,7 +128,7 @@ module ActiveRecord
       end
 
       def commit
-        persistor.update_model_space_model_versions(current_model_versions.merge(working_model_versions))
+        persistor.update_model_space_model_versions(model_space.name, model_space_key, current_model_versions.merge(working_model_versions))
       end
 
 
