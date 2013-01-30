@@ -26,7 +26,12 @@ module ActiveRecord
       end
 
       def table_name(model)
-        get_context_for_model(model).table_name(model)
+        ctx = unchecked_get_context_for_model(model)
+        if ctx
+          ctx.table_name(model)
+        else
+          get_model_space_for_model(model).base_table_name(model)
+        end
       end
 
       def current_table_name(model)
@@ -107,7 +112,7 @@ module ActiveRecord
       MERGED_CONTEXT_KEY = "ActiveRecord::ModelSpaces.merged_context"
 
       def merged_context
-        Thread.current[MERGED_CONTEXT_KEY]
+        Thread.current[MERGED_CONTEXT_KEY] || {}
       end
 
       def merged_context=(mc)
@@ -121,6 +126,11 @@ module ActiveRecord
           m[ctx.model_space.name] = ctx
           m
         end
+      end
+
+      def unchecked_get_context_for_model(model)
+        ms = get_model_space_for_model(model)
+        merged_context[ms.name] if ms
       end
 
       def get_context_for_model(model)

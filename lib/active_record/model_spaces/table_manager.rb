@@ -72,7 +72,6 @@ module ActiveRecord
       module_function
 
       def copy_table_schema(connection, from_table_name, to_table_name)
-        $stderr << "COPY: #{from_table_name} => #{to_table_name}\n\n"
         from_table_schema = table_schema(connection, from_table_name)
         to_table_schema = change_table_name(from_table_name, to_table_name, from_table_schema)
         connection.execute(to_table_schema)

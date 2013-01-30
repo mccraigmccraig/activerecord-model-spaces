@@ -53,6 +53,20 @@ module ActiveRecord
         end
       end
 
+      describe "table_name" do
+        it "should call base_table_name on the model's ModelSpace if no context is registered" do
+          r = Registry.new
+          m = double('foo-model')
+          m.stub(:to_s).and_return('FooModel')
+          r.register_model(m, :foo_space)
+
+          ms = r.send(:get_model_space, :foo_space)
+          ms.should_receive(:base_table_name).with(m)
+
+          r.table_name(m)
+        end
+      end
+
       describe "context proxy methods" do
         it "should call table_name on the live context" do
 
@@ -280,6 +294,41 @@ module ActiveRecord
           r.stub(:context_stack).and_return( [ctx1, ctx2] )
 
           r.send(:merge_context_stack).should == {:space_1=>ctx1, :space_2=>ctx2}
+        end
+      end
+
+      describe "unchecked_get_context_for_model" do
+        it "should return an active context" do
+          r = Registry.new
+          m = double('foo-model')
+          r.register_model(m, :foo_space)
+
+          ms = r.send(:get_model_space, :foo_space)
+          ctx = double('context')
+          ctx.stub(:model_space).and_return(ms)
+          ctx.should_receive(:commit)
+
+          ms.should_receive(:create_context).with("moar_foos").and_return(ctx)
+
+          r.with_model_space_context(:foo_space, "moar_foos") do
+            r.send(:unchecked_get_context_for_model, m).should == ctx
+          end
+        end
+
+        it "should return nil if the model_space of the model is unknown" do
+          r = Registry.new
+          m = double('foo-model')
+          r.send(:unchecked_get_context_for_model, m).should == nil
+        end
+
+        it "should return nil if the model_space is known but there is no active context" do
+          r = Registry.new
+          m = double('foo-model')
+          r.register_model(m, :foo_space)
+
+          ms = r.send(:get_model_space, :foo_space)
+
+          r.send(:unchecked_get_context_for_model, m).should == nil
         end
       end
 
