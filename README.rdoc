@@ -17,25 +17,29 @@ Models which participate in a ModelSpace need only make sure that they use the <
 
 == Usage
 
-Include the <tt>ActiveRecord::ModelSpaces</tt> module in a model Class, and declare the model to be part of a ModelSpace, optionally specifying a number of history versions (which defaults to 0)
+Include the <tt>ActiveRecord::ModelSpaces</tt> module in a model Class, and declare the model to be part of a ModelSpace, optionally specifying a number of history versions (which defaults to 0) and a base table name (from which contextual table names are constructed, and which defaults to the normal table name)
 
   require 'active_record/model_spaces'
 
   class AModel < ActiveRecord::Base
     include ActiveRecord::ModelSpaces
 
-    in_model_space :metadata, :history_versions=>1
-  end
-
-At this point, the model is no longer usable outside of a ModelSpaces context. To establish a context use the <tt>with_model_space_context</tt> method, which provides a key to be used along with the ModelSpace name to generate the name of the database table to be used by the model for the duration of the context
-
-  AModel.table_name # RuntimeException => "ModelSpace 'AModel' has no current context"
-
-  ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
-    AModel.table_name # "metadata__one__a_model"
+    in_model_space :metadata, :history_versions=>1, :base_table_name=>"unusual_models"
   end
 
 Each ModelSpace may have many models associated with it, but each model may only be associated with a single ModelSpace
+
+At this point, the model can be used in ModelSpaces context, and data will be sourced from a different table according to the context, the context key and any history version. Outside of a ModelSpaces context the model will source data from it's usual table
+
+To establish a context use the <tt>with_model_space_context</tt> method, which provides a key to be used along with the ModelSpace name to generate the name of the database table to be used by the model for the duration of the context
+
+  AModel.table_name # "unusual_models"
+
+  ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
+    AModel.table_name # "metadata__one__unusual_models"
+  end
+
+If the table to be used by a model within a context does not exist it will be created when the context is created. The created table will have the same schema as the normal model table
 
 If a model is declared as having history_versions then historical copies of the tables will be maintained. New or updated versions of a model can be created using the new_version and updated_version class methods on the model Class, while a context for the ModelSpace is established. The new versions are only visible within the context that they are created in, until the context complete without Error, at which point any new context established for that ModelSpace will use the newly created versions. Table names wrap once the given number of history version tables have been used
 
@@ -46,38 +50,38 @@ If a model is declared as having history_versions then historical copies of the 
   end
 
   ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
-    AModel.table_name # "metadata__one__a_model"
+    AModel.table_name # "metadata__one__unusual_models"
 
     AModel.new_version do
-      AModel.table_name # "metadata__one__a_model__1"
+      AModel.table_name # "metadata__one__unusual_models__1"
     end
 
-    AModel.table_name # "metadata__one__a_model__1"
+    AModel.table_name # "metadata__one__unusual_models__1"
 
-    BModel.table_name # "metadata__one__b_model"
+    BModel.table_name # "metadata__one__b_models"
 
     BModel.updated_version do
-      BModel.table_name # "metadata__one__b_model__1"
+      BModel.table_name # "metadata__one__b_models__1"
     end
 
-    BModel.table_name # "metadata__one__b_model__1"
+    BModel.table_name # "metadata__one__b_models__1"
   end
 
   ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
-    AModel.table_name # "metadata__one__a_model__1"
-    BModel.table_name # "metadata__one__b_model__1"
+    AModel.table_name # "metadata__one__unusual_models__1"
+    BModel.table_name # "metadata__one__b_models__1"
 
-    AModel.table_name # "metadata__one__a_model"
+    AModel.table_name # "metadata__one__unusual_models"
 
     AModel.new_version do
-        AModel.table_name # "metadata__one__a_model"
+        AModel.table_name # "metadata__one__unusual_models"
     end
 
-    AModel.table_name # "metadata__one__a_model"
+    AModel.table_name # "metadata__one__unusual_models"
   end
 
   ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
-    AModel.table_name # "metadata__one__a_model"
+    AModel.table_name # "metadata__one__unusual_models"
   end
 
 == Contributing to activerecord-model-spaces
