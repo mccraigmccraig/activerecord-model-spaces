@@ -43,6 +43,18 @@ module ActiveRecord
           r.registered_model_keys.include?("BarModel").should == true
           r.history_versions(m).should == 3
         end
+
+        it "should register a model with a base_table_name" do
+          ms = ModelSpace.new(:foo)
+          m = double("bar-model")
+          m.stub(:to_s).and_return("BarModel")
+
+          r = ms.register_model(m, :base_table_name=>"a_random_name")
+          r.should == ms # registering a model returns the ModelSpace
+
+          r.registered_model_keys.include?("BarModel").should == true
+          r.base_table_name(m).should == "a_random_name"
+        end
       end
 
       describe "is_registered?" do
@@ -62,8 +74,30 @@ module ActiveRecord
       end
 
       describe "history_versions" do
-        it "should retrieve the registered history version for a model" do
+        it "should return 0 if no history_versions were specified" do
+          ms = ModelSpace.new(:foo)
+          m = double("bar-model")
+          m.stub(:to_s).and_return("BarModel")
 
+          r = ms.register_model(m)
+          r.should == ms # registering a model returns the ModelSpace
+
+          r.registered_model_keys.include?("BarModel").should == true
+          r.history_versions(m).should == 0
+        end
+      end
+
+      describe "base_table_name" do
+        it "should use TableNames.base_table_name to determine the base_table_name if non is specified" do
+          ms = ModelSpace.new(:foo)
+          m = double("bar-model")
+          m.stub(:to_s).and_return("BarModel")
+
+          r = ms.register_model(m)
+          r.should == ms # registering a model returns the ModelSpace
+
+          r.registered_model_keys.include?("BarModel").should == true
+          r.base_table_name(m).should == "bar_models"
         end
       end
 

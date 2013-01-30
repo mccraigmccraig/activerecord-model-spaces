@@ -2,6 +2,7 @@ require 'set'
 require 'active_support'
 require 'active_record/model_spaces/context'
 require 'active_record/model_spaces/persistor'
+require 'active_record/model_spaces/table_names'
 require 'active_record/model_spaces/util'
 
 module ActiveRecord
@@ -36,6 +37,10 @@ module ActiveRecord
         get_model_registration(model)[:history_versions]
       end
 
+      def base_table_name(model)
+        get_model_registration(model)[:base_table_name] || TableNames.base_table_name(model)
+      end
+
       def registered_model_keys
         self.model_registrations.keys
       end
@@ -63,7 +68,7 @@ module ActiveRecord
 
     module_function
 
-    MODEL_REGISTRATION_KEYS = [:history_versions].to_set
+    MODEL_REGISTRATION_KEYS = [:history_versions, :base_table_name].to_set
 
     def check_model_registration_keys(keys)
       unknown_keys = (keys.map(&:to_sym).to_set - MODEL_REGISTRATION_KEYS).to_a
