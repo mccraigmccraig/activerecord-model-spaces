@@ -114,7 +114,7 @@ module ActiveRecord
         describe "copy_table_schema" do
           it "should ask mysql for the create-table statement, modify it and execute the modified statement" do
             c = double('connection')
-            c.should_receive(:select_value).with("SHOW CREATE TABLE `foos`").and_return("CREATE TABLE `foos` (blah)")
+            c.should_receive(:select_rows).with("SHOW CREATE TABLE `foos`").and_return([["foos", "CREATE TABLE `foos` (blah)"]])
             c.should_receive(:execute).with("CREATE TABLE `bars` (blah)")
 
             MySQLTableSchemaCopier.copy_table_schema(c, "foos", "bars")
@@ -124,8 +124,8 @@ module ActiveRecord
         describe "table_schema" do
           it "should ask mysql for the create-table statement for the table" do
             c = double('connection')
-            c.should_receive(:select_value).with("SHOW CREATE TABLE `foos`")
-            MySQLTableSchemaCopier.table_schema(c, "foos")
+            c.should_receive(:select_rows).with("SHOW CREATE TABLE `foos`").and_return([["foos", "CREATE TABLE `foos` (blah)"]])
+            MySQLTableSchemaCopier.table_schema(c, "foos").should == "CREATE TABLE `foos` (blah)"
           end
         end
 
