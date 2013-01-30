@@ -9,15 +9,33 @@ module ActiveRecord
 
       describe "initialize" do
 
-        it "should initialize with a model_space, model_space_key and persistor" do
-          ms = double('model-space')
-          ms.stub(:name).and_return(:foo_space)
+        it "should initialize with a model_space, model_space_key and persistor and create necessary tables" do
+          im = double('items-model')
+          im.stub(:to_s).and_return("Items")
+          um = double('users-model')
+          um.stub(:to_s).and_return("Users")
+
+          ms = ModelSpace.new(:foo_space)
+          ms.register_model(im)
+          ms.register_model(um)
+
+          Util.stub(:model_from_name).with("Items").and_return(im)
+          Util.stub(:model_from_name).with("Users").and_return(um)
+
+          itm = double('items-table-manager')
+          utm = double('users-table-manager')
+          TableManager.should_receive(:new).with(im).and_return(itm)
+          TableManager.should_receive(:new).with(um).and_return(utm)
+
+          itm.should_receive(:create_table).with("items", "foo_space__one__items__1")
+          utm.should_receive(:create_table).with("users", "foo_space__one__users__2")
 
           p = double('persistor')
           v = {"Items"=>1, "Users"=>2}
           p.should_receive(:read_model_space_model_versions).with(:foo_space, :one).and_return(v)
 
           c = Context.new(ms, 'one', p)
+
           c.model_space.should == ms
           c.model_space_key.should == :one
           c.persistor.should == p
@@ -47,6 +65,7 @@ module ActiveRecord
         cmv = attrs[:current_model_versions] || double('current-model-versions')
         p.should_receive(:read_model_space_model_versions).with(ms_name, msk).and_return(cmv)
 
+        Context.any_instance.stub(:create_tables) # don't need this here
         Context.new(ms, msk, p)
       end
 
@@ -78,10 +97,10 @@ module ActiveRecord
       end
 
       describe "base_table_name" do
-        it "should return the base table_name" do
-          ctx = create_context
+        it "should ask the ModelSpace for the base_table_name" do
           m = double('model')
-          TableNames.should_receive(:base_table_name).with(m)
+          ctx = create_context_with_one_model(m)
+          ctx.model_space.should_receive(:base_table_name).with(m)
           ctx.base_table_name(m)
         end
       end

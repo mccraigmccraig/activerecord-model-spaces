@@ -20,11 +20,20 @@ module ActiveRecord
         @model_space_key = model_space_key.to_sym
         @persistor = persistor
         read_versions
+        create_tables
       end
 
       def read_versions
         @current_model_versions = persistor.read_model_space_model_versions(model_space.name, model_space_key)
         @working_model_versions = {}
+      end
+
+      def create_tables
+        model_space.registered_model_keys.map do |model_name|
+          m = Util.model_from_name(model_name)
+          tm = TableManager.new(m)
+          tm.create_table(base_table_name(m), current_table_name(m))
+        end
       end
 
       # implements the Model.table_name method
@@ -35,7 +44,7 @@ module ActiveRecord
 
       # base table name
       def base_table_name(model)
-        TableNames.base_table_name(model)
+        model_space.base_table_name(model)
       end
 
       # table_name for version 0
@@ -135,7 +144,7 @@ module ActiveRecord
       private
 
       def table_name_from_model_version(model, version)
-        TableNames.table_name(model_space.name, model_space_key, model_space.base_table_name(model), model_space.history_versions(model), version)
+        TableNames.table_name(model_space.name, model_space_key, base_table_name(model), model_space.history_versions(model), version)
       end
 
       def get_current_model_version(model)
