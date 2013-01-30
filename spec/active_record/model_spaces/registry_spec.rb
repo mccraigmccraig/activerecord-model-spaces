@@ -40,6 +40,19 @@ module ActiveRecord
         end
       end
 
+      describe "reset!" do
+        it "should reset model and model_space registrations" do
+          r = Registry.new
+          m = double('foo-model')
+          m.stub(:to_s).and_return("FooModel")
+          r.register_model(m, :foo_space)
+          r.send(:get_model_space, :foo_space).is_registered?(m).should == true
+          r.reset!
+          r.send(:get_model_space, :foo_space).should == nil
+          r.send(:get_model_space_for_model, m).should == nil
+        end
+      end
+
       describe "context proxy methods" do
         it "should call table_name on the live context" do
 

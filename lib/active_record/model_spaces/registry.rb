@@ -10,6 +10,12 @@ module ActiveRecord
       attr_reader :model_spaces_by_models
 
       def initialize
+        reset!
+      end
+
+      # drop all model_space and model registrations. will cause any with_model_space_context
+      # to most likely bork horribly
+      def reset!
         @model_spaces = {}
         @model_spaces_by_models = {}
       end
