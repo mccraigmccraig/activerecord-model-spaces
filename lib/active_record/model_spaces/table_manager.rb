@@ -18,7 +18,7 @@ module ActiveRecord
 
       # create a new table with the same schema as the base_table, but a different name
       def create_table(base_table_name, table_name)
-        if table_name != base_table_name
+        if table_name != base_table_name && !connection.table_exists?(table_name)
           get_table_schema_copier(connection).copy_table_schema(connection, base_table_name, table_name)
         end
       end
@@ -72,6 +72,7 @@ module ActiveRecord
       module_function
 
       def copy_table_schema(connection, from_table_name, to_table_name)
+        $stderr << "COPY: #{from_table_name} => #{to_table_name}\n\n"
         from_table_schema = table_schema(connection, from_table_name)
         to_table_schema = change_table_name(from_table_name, to_table_name, from_table_schema)
         connection.execute(to_table_schema)

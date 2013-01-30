@@ -38,6 +38,7 @@ module ActiveRecord
       describe "create table" do
         it "should extract the base_table schema, and use it to create a new table" do
           tm = create_table_manager
+          tm.connection.should_receive(:table_exists?).with('bars')
 
           tsc = double('table-schema-copier')
           tm.should_receive(:get_table_schema_copier).with(tm.connection).and_return(tsc)
