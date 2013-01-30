@@ -19,7 +19,7 @@ module ActiveRecord
 
     def create_model_spaces_class
       klass = Class.new
-      class << klass
+      klass.class_eval do
         include ActiveRecord::ModelSpaces
       end
       klass

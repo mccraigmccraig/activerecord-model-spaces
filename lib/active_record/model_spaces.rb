@@ -16,7 +16,7 @@ module ActiveRecord
     REGISTRY = Registry.new
 
     def self.included(mod)
-      mod.class_eval do
+      class << mod
         include ClassMethods
       end
     end
