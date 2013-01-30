@@ -25,6 +25,13 @@ module ActiveRecord
       klass
     end
 
+    it "should bork if set_table_name method is used" do
+      klass = create_model_spaces_class
+      expect {
+        klass.set_table_name("blah")
+      }.to raise_error /set_table_name is incompatible/
+    end
+
     it "should pass in_model_space calls to the registry" do
       klass = create_model_spaces_class
       ModelSpaces::REGISTRY.should_receive(:register_model).with(klass, :foo_space, {})

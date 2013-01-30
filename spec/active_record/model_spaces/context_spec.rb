@@ -53,7 +53,7 @@ module ActiveRecord
       def create_context_with_one_model(im, attrs={})
         im.stub(:to_s).and_return("Items")
         ms = ModelSpace.new(:foo)
-        ms.register_model(im, :history_versions=>2)
+        ms.register_model(im, :history_versions=>2, :base_table_name=>"some_items")
         create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
       end
 
@@ -90,7 +90,7 @@ module ActiveRecord
         it "should return the current_model_version based table_name if present" do
           im = double('items-model')
           ctx = create_context_with_one_model(im, :model_space_key=>"one")
-          TableNames.should_receive(:table_name).with(:foo, :one, im, 2, 1)
+          TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, 1)
           ctx.table_name(im)
         end
 
@@ -98,7 +98,7 @@ module ActiveRecord
           im = double('items-model')
           ctx = create_context_with_one_model(im, :model_space_key=>"one")
           ctx.send(:set_working_model_version, im, 2)
-          TableNames.should_receive(:table_name).with(:foo, :one, im, 2, 2)
+          TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, 2)
           ctx.table_name(im)
         end
       end
@@ -107,7 +107,7 @@ module ActiveRecord
         it "should return the table_name for the model with version 0" do
           im = double('items-model')
           ctx = create_context_with_one_model(im, :model_space_key=>"one")
-          TableNames.should_receive(:table_name).with(:foo, :one, im, 2, 0)
+          TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, 0)
           ctx.hoovered_table_name(im)
         end
       end
@@ -369,13 +369,13 @@ module ActiveRecord
           ctx = create_context_with_one_model(im, :model_space_key=>"one")
 
           v = double('version')
-          TableNames.should_receive(:table_name).with(:foo, :one, im, 2, v)
+          TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, v)
           ctx.send(:table_name_from_model_version, im, v)
 
           TableNames.rspec_reset
-          ctx.send(:table_name_from_model_version, im, 3).should == "foo__one__items__3"
-          ctx.send(:table_name_from_model_version, im, 0).should == "foo__one__items"
-          ctx.send(:table_name_from_model_version, im, nil).should == "foo__one__items"
+          ctx.send(:table_name_from_model_version, im, 3).should == "foo__one__some_items__3"
+          ctx.send(:table_name_from_model_version, im, 0).should == "foo__one__some_items"
+          ctx.send(:table_name_from_model_version, im, nil).should == "foo__one__some_items"
         end
       end
 

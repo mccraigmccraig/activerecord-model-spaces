@@ -34,8 +34,12 @@ module ActiveRecord
         REGISTRY.register_model(self, model_space_name, opts)
       end
 
+      def set_table_name(table_name)
+        raise "set_table_name is incompatible with ModelSpaces... instead, use :base_table_name option on in_model_space"
+      end
+
       def table_name
-        REGISTRY.table_name(self)
+        ActiveRecord::ModelSpaces::REGISTRY.table_name(self)
       end
 
       def current_table_name

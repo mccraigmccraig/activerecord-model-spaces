@@ -135,7 +135,7 @@ module ActiveRecord
       private
 
       def table_name_from_model_version(model, version)
-        TableNames.table_name(model_space.name, model_space_key, model, model_space.history_versions(model), version)
+        TableNames.table_name(model_space.name, model_space_key, model_space.base_table_name(model), model_space.history_versions(model), version)
       end
 
       def get_current_model_version(model)

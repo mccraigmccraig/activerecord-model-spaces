@@ -17,7 +17,7 @@ module ActiveRecord
           instance_eval{|s| ActiveSupport::Inflector.pluralize(s)}
       end
 
-      def model_space_table_name(model_space_name, model_space_key, model)
+      def model_space_table_name(model_space_name, model_space_key, base_table_name)
         if (!model_space_name || model_space_name.to_s.empty?) &&
             (model_space_key && !model_space_key.to_s.empty?)
           raise "model_space_key cannot be non-empty if model_space_name is empty"
@@ -25,7 +25,7 @@ module ActiveRecord
 
         [ ("#{model_space_name}__" if model_space_name && !model_space_name.to_s.empty?),
           ("#{model_space_key}__" if model_space_key && !model_space_key.to_s.empty?),
-          base_table_name(model)].compact.join
+          base_table_name].compact.join
       end
 
       def table_name(model_space_name, model_space_key, model, history_versions, v)
