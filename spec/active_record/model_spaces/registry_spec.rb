@@ -30,6 +30,19 @@ module ActiveRecord
         end
       end
 
+      describe "reset!" do
+        it "should reset model and model_space registrations" do
+          r = Registry.new
+          m = double('foo-model')
+          m.stub(:to_s).and_return("FooModel")
+          r.register_model(m, :foo_space)
+          r.send(:get_model_space, :foo_space).is_registered?(m).should == true
+          r.reset!
+          r.send(:get_model_space, :foo_space).should == nil
+          r.send(:unchecked_get_model_space_for_model, m).should == nil
+        end
+      end
+
       describe "register_model" do
         it "should register a model" do
           r = Registry.new
@@ -40,16 +53,30 @@ module ActiveRecord
         end
       end
 
-      describe "reset!" do
-        it "should reset model and model_space registrations" do
+      describe "base_table_name" do
+        it "should retrieve the models base_table_name" do
           r = Registry.new
           m = double('foo-model')
           m.stub(:to_s).and_return("FooModel")
           r.register_model(m, :foo_space)
-          r.send(:get_model_space, :foo_space).is_registered?(m).should == true
-          r.reset!
-          r.send(:get_model_space, :foo_space).should == nil
-          r.send(:get_model_space_for_model, m).should == nil
+          r.base_table_name(m).should == "foo_models"
+
+          m2 = double('bar-model')
+          m2.stub(:to_s).and_return("BarModel")
+          r.register_model(m2, :foo_space, :base_table_name=>"moar_models")
+          r.base_table_name(m2).should == "moar_models"
+        end
+      end
+
+      describe "set_base_table_name" do
+        it "should set a base_table_name" do
+          r = Registry.new
+          m = double('foo-model')
+          m.stub(:to_s).and_return("FooModel")
+          r.register_model(m, :foo_space)
+          r.base_table_name(m).should == "foo_models"
+          r.set_base_table_name(m, "random_models")
+          r.base_table_name(m).should == "random_models"
         end
       end
 
@@ -256,7 +283,18 @@ module ActiveRecord
 
           r = Registry.new
           r.send(:register_model_space_for_model, m , ms)
+          r.send(:unchecked_get_model_space_for_model, m).should == ms
           r.send(:get_model_space_for_model, m).should == ms
+        end
+
+        it "should bork if a model is not registered" do
+          m = double('model')
+          m.stub(:to_s).and_return("A::SomeModel")
+
+          r = Registry.new
+          expect {
+            r.send(:get_model_space_for_model, m)
+          }.to raise_error /A::SomeModel is not registered to any ModelSpace/
         end
 
         it "should bork if a model is registered twice" do

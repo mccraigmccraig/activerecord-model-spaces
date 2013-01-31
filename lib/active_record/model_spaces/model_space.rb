@@ -37,6 +37,10 @@ module ActiveRecord
         get_model_registration(model)[:history_versions]
       end
 
+      def set_base_table_name(model, table_name)
+        get_model_registration(model)[:base_table_name] = table_name
+      end
+
       def base_table_name(model)
         get_model_registration(model)[:base_table_name] || TableNames.base_table_name(model)
       end

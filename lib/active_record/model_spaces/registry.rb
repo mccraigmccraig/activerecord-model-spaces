@@ -25,6 +25,14 @@ module ActiveRecord
         register_model_space_for_model(model, ms)
       end
 
+      def set_base_table_name(model, table_name)
+        get_model_space_for_model(model).set_base_table_name(model, table_name)
+      end
+
+      def base_table_name(model)
+        get_model_space_for_model(model).base_table_name(model)
+      end
+
       def table_name(model)
         ctx = unchecked_get_context_for_model(model)
         if ctx
@@ -94,13 +102,19 @@ module ActiveRecord
       end
 
       def register_model_space_for_model(model, model_space)
-        raise "#{model.to_s}: already registered to model space: #{get_model_space_for_model(model).name}" if get_model_space_for_model(model)
+        raise "#{model.to_s}: already registered to model space: #{get_model_space_for_model(model).name}" if unchecked_get_model_space_for_model(model)
 
         model_spaces_by_models[model_key(model)] = model_space
       end
 
-      def get_model_space_for_model(model)
+      def unchecked_get_model_space_for_model(model)
         model_spaces_by_models[model_key(model)]
+      end
+
+      def get_model_space_for_model(model)
+        ms = unchecked_get_model_space_for_model(model)
+        raise "model: #{model} is not registered to any ModelSpace" if !ms
+        ms
       end
 
       CONTEXT_STACK_KEY = "ActiveRecord::ModelSpaces.context_stack"
@@ -129,14 +143,12 @@ module ActiveRecord
       end
 
       def unchecked_get_context_for_model(model)
-        ms = get_model_space_for_model(model)
+        ms = unchecked_get_model_space_for_model(model)
         merged_context[ms.name] if ms
       end
 
       def get_context_for_model(model)
         ms = get_model_space_for_model(model)
-        raise "#{model.to_s} is not registered to any ModelSpace" if !ms
-        raise "ModelSpace: '#{ms.name}' has no current context" if !merged_context
         ctx = merged_context[ms.name]
         raise "ModelSpace: '#{ms.name}' has no current context" if !ctx
         ctx

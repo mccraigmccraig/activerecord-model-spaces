@@ -87,6 +87,19 @@ module ActiveRecord
         end
       end
 
+      describe "set_base_table_name" do
+        it "should set the models base_table_name" do
+          ms = ModelSpace.new(:foo)
+          m = double('bar-model')
+          m.stub(:to_s).and_return("BarModel")
+
+          ms.register_model(m)
+          ms.base_table_name(m).should == "bar_models"
+          ms.set_base_table_name(m, 'moar_models')
+          ms.base_table_name(m).should == 'moar_models'
+        end
+      end
+
       describe "base_table_name" do
         it "should use TableNames.base_table_name to determine the base_table_name if non is specified" do
           ms = ModelSpace.new(:foo)
