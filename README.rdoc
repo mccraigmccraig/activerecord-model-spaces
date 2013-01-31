@@ -71,8 +71,6 @@ If a model is declared as having history_versions then historical copies of the 
     AModel.table_name # "metadata__one__unusual_models__1"
     BModel.table_name # "metadata__one__b_models__1"
 
-    AModel.table_name # "metadata__one__unusual_models"
-
     AModel.new_version do
         AModel.table_name # "metadata__one__unusual_models"
     end
