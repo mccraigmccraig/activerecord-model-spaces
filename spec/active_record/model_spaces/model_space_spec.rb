@@ -57,6 +57,19 @@ module ActiveRecord
         end
       end
 
+      describe "deregister_model" do
+        it "should deregister a model" do
+          ms = ModelSpace.new(:foo)
+          m = double('bar-model')
+          m.stub(:to_s).and_return("BarModel")
+
+          ms.register_model(m)
+          ms.is_registered?(m).should == true
+          ms.deregister_model(m)
+          ms.is_registered?(m).should == false
+        end
+      end
+
       describe "is_registered?" do
         it "should return true if a model is registered, false otherwise" do
           ms = ModelSpace.new(:foo)

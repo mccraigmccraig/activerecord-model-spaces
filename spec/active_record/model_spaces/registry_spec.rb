@@ -307,21 +307,27 @@ module ActiveRecord
           }.to raise_error /A::SomeModel is not registered to any ModelSpace/
         end
 
-        it "should bork if a model is registered twice" do
-          ms = double('model-space')
-          ms.stub(:name).and_return(:foo_space)
-
-          ms2 = double('model-space-2')
-
+        it "should re-register if a model is registered twice" do
           m = double('a-model')
           m.stub(:to_s).and_return("AModel")
 
           r = Registry.new
-          r.send(:register_model_space_for_model, m , ms)
+          r.register_model(m, :foo_space, :history_versions=>2)
 
-          expect {
-            r.send(:register_model_space_for_model, m, ms2)
-          }.to raise_error /AModel: already registered to model space: foo_space/
+          fs = r.send(:get_model_space, :foo_space)
+          r.send(:get_model_space_for_model, m).should == fs
+          fs.is_registered?(m).should == true
+          fs.history_versions(m).should == 2
+
+          r.register_model(m, :bar_space, :base_table_name=>"moar_models")
+
+          fs.is_registered?(m).should == false
+
+          bs = r.send(:get_model_space, :bar_space)
+          r.send(:get_model_space_for_model, m).should == bs
+          bs.is_registered?(m).should == true
+          bs.history_versions(m).should == 0
+          bs.base_table_name(m).should == "moar_models"
         end
       end
 

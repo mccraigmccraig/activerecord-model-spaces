@@ -33,6 +33,10 @@ module ActiveRecord
         self
       end
 
+      def deregister_model(model)
+        delete_model_registration(model)
+      end
+
       def history_versions(model)
         get_model_registration(model)[:history_versions]
       end
@@ -65,6 +69,10 @@ module ActiveRecord
 
       def set_model_registration(model, registration)
         self.model_registrations[name_from_model(model)] = registration
+      end
+
+      def delete_model_registration(model)
+        self.model_registrations.delete(name_from_model(model))
       end
     end
 

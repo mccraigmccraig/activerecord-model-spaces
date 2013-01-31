@@ -21,8 +21,11 @@ module ActiveRecord
       end
 
       def register_model(model, model_space_name, opts={})
-        ms = register_model_space(model_space_name).register_model(model, opts)
-        register_model_space_for_model(model, ms)
+        old_ms = unchecked_get_model_space_for_model(model)
+        old_ms.deregister_model(model) if old_ms
+
+        new_ms = register_model_space(model_space_name).register_model(model, opts)
+        register_model_space_for_model(model, new_ms)
       end
 
       def set_base_table_name(model, table_name)
@@ -104,8 +107,6 @@ module ActiveRecord
       end
 
       def register_model_space_for_model(model, model_space)
-        raise "#{model.to_s}: already registered to model space: #{get_model_space_for_model(model).name}" if unchecked_get_model_space_for_model(model)
-
         model_spaces_by_models[model_key(model)] = model_space
       end
 
