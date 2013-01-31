@@ -3,11 +3,11 @@
 {<img src="https://travis-ci.org/mccraigmccraig/activerecord-model-spaces.png?branch=master" alt="Build Status" />}[https://travis-ci.org/mccraigmccraig/activerecord-model-spaces]
 {<img src="https://codeclimate.com/badge.png" alt="Code Climate"/>}[https://codeclimate.com/github/mccraigmccraig/activerecord-model-spaces]
 
-Provides a means of contextually associating sets of ActiveRecord models with database tables
+Provides a means of contextually associating sets of ActiveRecord models with database tables through a <tt>table_name</tt> method implementation
 
-This can be used to maintain multiple independent versions of model data, for applications such as multi-tenancy
+This can be used to maintain multiple independent versions of model datasets, for applications including multi-tenancy
 
-Additionally, each model participating in a ModelSpace can optionally be assigned a number of "history versions" which are consistent historical versions of all the models in a ModelSpace, and methods are provided to create new or updated versions of models in a ModelSpace
+Additionally, each model participating in a ModelSpace can optionally be assigned a number of "history versions", and methods are provided to create new or updated versions of the datasets in a ModelSpace without causing locks or large transactions
 
 Models which participate in a ModelSpace need only make sure that they use the <tt>table_name</tt> method whenever they refer to the database table. Since all ActiveRecord methods already do this, it is only application methods which generate SQL which must take care
 
