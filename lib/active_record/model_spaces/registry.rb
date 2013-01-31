@@ -26,7 +26,9 @@ module ActiveRecord
       end
 
       def set_base_table_name(model, table_name)
-        get_model_space_for_model(model).set_base_table_name(model, table_name)
+        ms = unchecked_get_model_space_for_model(model)
+        raise "model #{model} is not (yet) registered to a ModelSpace. do in_model_space before set_table_name or use the :base_table_name option of in_model_space" if !ms
+        ms.set_base_table_name(model, table_name)
       end
 
       def base_table_name(model)

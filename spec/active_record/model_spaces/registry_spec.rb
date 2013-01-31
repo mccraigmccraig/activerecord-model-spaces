@@ -78,6 +78,16 @@ module ActiveRecord
           r.set_base_table_name(m, "random_models")
           r.base_table_name(m).should == "random_models"
         end
+
+        it "should provide an informative error if the model is not yet registered to a model space" do
+          r = Registry.new
+          m = double('foo-model')
+          m.stub(:to_s).and_return("FooModel")
+
+          expect {
+            r.set_base_table_name(m, "random_models")
+          }.to raise_error /FooModel is not \(yet\) registered to a ModelSpace/
+        end
       end
 
       describe "table_name" do
