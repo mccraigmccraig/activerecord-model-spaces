@@ -276,16 +276,6 @@ module ActiveRecord
         end
       end
 
-      describe "model_key" do
-        it "should underscore the model name" do
-          m = double('foo-model')
-          m.stub(:to_s).and_return("SomeModule::Foo")
-
-          r = Registry.new
-          r.send(:model_key, m).should == "some_module/foo"
-        end
-      end
-
       describe "model spaces by model" do
         it "should register a ModelSpace for a model" do
           m = double('model')

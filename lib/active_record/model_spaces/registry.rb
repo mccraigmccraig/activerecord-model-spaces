@@ -5,6 +5,7 @@ module ActiveRecord
   module ModelSpaces
 
     class Registry
+      include Util
 
       attr_reader :model_spaces
       attr_reader :model_spaces_by_models
@@ -102,16 +103,12 @@ module ActiveRecord
         model_spaces[model_space_name.to_sym]
       end
 
-      def model_key(model)
-        ActiveSupport::Inflector.underscore(model.to_s)
-      end
-
       def register_model_space_for_model(model, model_space)
-        model_spaces_by_models[model_key(model)] = model_space
+        model_spaces_by_models[name_from_model(model)] = model_space
       end
 
       def unchecked_get_model_space_for_model(model)
-        model_spaces_by_models[model_key(model)]
+        model_spaces_by_models[name_from_model(model)]
       end
 
       def get_model_space_for_model(model)
