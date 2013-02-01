@@ -9,6 +9,7 @@ module ActiveRecord
 
       attr_reader :model_spaces
       attr_reader :model_spaces_by_models
+      attr_reader :enforce_context
 
       def initialize
         reset!
@@ -39,8 +40,12 @@ module ActiveRecord
         get_model_space_for_model(model).base_table_name(model)
       end
 
+      def set_enforce_context(v)
+        @enforce_context = !!v
+      end
+
       def table_name(model)
-        ctx = unchecked_get_context_for_model(model)
+        ctx = enforce_context ? get_context_for_model(model) : unchecked_get_context_for_model(model)
         if ctx
           ctx.table_name(model)
         else

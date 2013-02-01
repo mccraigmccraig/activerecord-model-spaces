@@ -91,7 +91,7 @@ module ActiveRecord
       end
 
       describe "table_name" do
-        it "should call base_table_name on the model's ModelSpace if no context is registered" do
+        it "should call base_table_name on the model's ModelSpace if no context is registered and !enforce_context" do
           r = Registry.new
           m = double('foo-model')
           m.stub(:to_s).and_return('FooModel')
@@ -101,6 +101,19 @@ module ActiveRecord
           ms.should_receive(:base_table_name).with(m)
 
           r.table_name(m)
+        end
+
+        it "should bork if no context is registered for the model's ModelSpace and enforce_context" do
+          r = Registry.new
+          m = double('foo-model')
+          m.stub(:to_s).and_return('FooModel')
+          r.register_model(m, :foo_space)
+
+          r.set_enforce_context(true)
+
+          expect {
+            r.table_name(m)
+          }.to raise_error /'foo_space' has no current context/
         end
       end
 

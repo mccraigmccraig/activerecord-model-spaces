@@ -17,6 +17,22 @@ module ActiveRecord
       end
     end
 
+    describe "enforce_context" do
+      it "should pass enforce_contrext calls to the registry" do
+        ec = double('enforce-context')
+        ModelSpaces::REGISTRY.should_receive(:enforce_context).and_return(ec)
+        ModelSpaces.enforce_context.should == ec
+      end
+    end
+
+    describe "set_enforce_context" do
+      it "should pass set_enforce_context calls to the registry" do
+        ec = double('enforce-context')
+        ModelSpaces::REGISTRY.should_receive(:set_enforce_context).with(ec)
+        ModelSpaces.set_enforce_context(ec)
+      end
+    end
+
     def create_model_spaces_class
       klass = Class.new
       klass.class_eval do

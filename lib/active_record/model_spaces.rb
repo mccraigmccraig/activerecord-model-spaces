@@ -27,6 +27,14 @@ module ActiveRecord
       REGISTRY.with_model_space_context(model_space_name, model_space_key, &block)
     end
 
+    def enforce_context
+      REGISTRY.enforce_context
+    end
+
+    def set_enforce_context(ec)
+      REGISTRY.set_enforce_context(ec)
+    end
+
     module ClassMethods
 
       # register a model as belonging to a model space
