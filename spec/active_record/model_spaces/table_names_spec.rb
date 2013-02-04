@@ -9,6 +9,10 @@ module ActiveRecord
         it "should underscore and pluralize the classname" do
           TableNames.base_table_name("FooBar").should == "foo_bars"
         end
+
+        it "should remove module names" do
+          TableNames.base_table_name(ModelSpaces).should == "model_spaces"
+        end
       end
 
       describe "model_space_table_name" do

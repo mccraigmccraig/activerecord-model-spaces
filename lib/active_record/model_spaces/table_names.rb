@@ -13,6 +13,7 @@ module ActiveRecord
 
       def base_table_name(model)
         name_from_model(model).
+          instance_eval{|s| ActiveSupport::Inflector.demodulize(s)}.
           instance_eval{|s| ActiveSupport::Inflector.underscore(s)}.
           instance_eval{|s| ActiveSupport::Inflector.pluralize(s)}
       end
