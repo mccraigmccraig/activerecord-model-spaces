@@ -49,6 +49,10 @@ module ActiveRecord
         get_model_registration(model)[:model]
       end
 
+      def registered_model_name(model)
+        name_from_model(get_model_registration(model)[:model])
+      end
+
       def base_table_name(model)
         r = get_model_registration(model)
         r[:base_table_name] || TableNames.base_table_name(r[:model])

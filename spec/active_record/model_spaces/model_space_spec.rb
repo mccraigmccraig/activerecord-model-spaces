@@ -80,6 +80,25 @@ module ActiveRecord
         end
       end
 
+      describe "registered_model_name" do
+        it "should return the name of the registered model" do
+          ms = ModelSpace.new(:foo)
+          m = create_model('BarModel')
+          ms.register_model(m)
+          ms.registered_model_name(m).should == 'BarModel'
+        end
+
+        it "should return the name of the registered superclass for a model" do
+          ms = ModelSpace.new(:foo)
+          m1 = create_model('BarModel')
+          m2 = create_model('BazModel', m1)
+
+          ms.register_model(m1)
+
+          ms.registered_model_name(m2).should == 'BarModel'
+        end
+      end
+
       describe "unchecked_get_model_registration" do
         it "should retrieve a model registration" do
           ms = ModelSpace.new(:foo)

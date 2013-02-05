@@ -141,7 +141,6 @@ module ActiveRecord
         persistor.update_model_space_model_versions(model_space.name, model_space_key, current_model_versions.merge(working_model_versions))
       end
 
-
       private
 
       def table_name_from_model_version(model, version)
@@ -150,20 +149,20 @@ module ActiveRecord
 
       def get_current_model_version(model)
         raise "#{model}: not registered with ModelSpace: #{model_space.name}" if !model_space.is_registered?(model)
-        self.current_model_versions[name_from_model(model)] || 0
+        self.current_model_versions[model_space.registered_model_name(model)] || 0
       end
 
       def get_working_model_version(model)
         raise "#{model}: not registered with ModelSpace: #{model_space.name}" if !model_space.is_registered?(model)
-        self.working_model_versions[name_from_model(model)]
+        self.working_model_versions[model_space.registered_model_name(model)]
       end
 
       def set_working_model_version(model, version)
-        self.working_model_versions[name_from_model(model)] = version
+        self.working_model_versions[model_space.registered_model_name(model)] = version
       end
 
       def delete_working_model_version(model)
-        self.working_model_versions.delete(name_from_model(model))
+        self.working_model_versions.delete(model_space.registered_model_name(model))
       end
     end
   end
