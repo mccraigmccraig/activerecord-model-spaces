@@ -38,8 +38,9 @@ module ActiveRecord
         class_for_classname(classname) || require_for_classname(classname)
       end
 
-      def all_superclasses(klass)
-        superclasses = klass.ancestors.grep(Class).sort
+      # returns all model superclasses upto but not including ActiveRecord::Base
+      def all_model_superclasses(klass)
+        superclasses = klass.ancestors.grep(Class).sort.take_while{|k| k < ActiveRecord::Base}
       end
 
     end

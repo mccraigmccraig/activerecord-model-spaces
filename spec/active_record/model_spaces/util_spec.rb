@@ -1,5 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
+require 'active_record'
 require 'active_record/model_spaces/util'
 
 module ActiveRecord
@@ -70,17 +71,13 @@ module ActiveRecord
         end
       end
 
-      describe "all_superclasses" do
-        it "should return an ordered list of all superclasses of a class" do
-          c1 = Class.new
+      describe "all_model_superclasses" do
+        it "should return an ordered list of all model superclasses of a class" do
+          c1 = Class.new(ActiveRecord::Base)
           c2 = Class.new(c1)
           c3 = Class.new(c2)
 
-          if defined? BasicObject
-            Util.all_superclasses(c3).should == [c3,c2,c1,Object,BasicObject]
-          else
-            Util.all_superclasses(c3).should == [c3,c2,c1,Object]
-          end
+          Util.all_model_superclasses(c3).should == [c3,c2,c1]
         end
       end
 
