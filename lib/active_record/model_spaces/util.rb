@@ -38,6 +38,10 @@ module ActiveRecord
         class_for_classname(classname) || require_for_classname(classname)
       end
 
+      def all_superclasses(klass)
+        superclasses = klass.ancestors.grep(Class).sort
+      end
+
     end
 
   end

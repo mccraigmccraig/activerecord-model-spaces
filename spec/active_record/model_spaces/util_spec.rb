@@ -70,6 +70,20 @@ module ActiveRecord
         end
       end
 
+      describe "all_superclasses" do
+        it "should return an ordered list of all superclasses of a class" do
+          c1 = Class.new
+          c2 = Class.new(c1)
+          c3 = Class.new(c2)
+
+          if defined? BasicObject
+            Util.all_superclasses(c3).should == [c3,c2,c1,Object,BasicObject]
+          else
+            Util.all_superclasses(c3).should == [c3,c2,c1,Object]
+          end
+        end
+      end
+
     end
   end
 end
