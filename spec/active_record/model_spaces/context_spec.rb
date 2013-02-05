@@ -83,6 +83,15 @@ module ActiveRecord
         [ctx, im]
       end
 
+      def create_context_with_parent_child_models(attrs={})
+        p = create_model('Parent')
+        c = create_model('Child', p)
+        ms = ModelSpace.new(:foo)
+        ms.register_model(p, :history_versions=>2)
+        ctx = create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Parent"=>1}))
+        [ctx, p, c]
+      end
+
       def create_context_with_two_models(attrs={})
         im = create_model('Item')
         um = create_model('User')
@@ -377,6 +386,13 @@ module ActiveRecord
           ctx.send(:table_name_from_model_version, im, 0).should == "foo__one__some_items"
           ctx.send(:table_name_from_model_version, im, nil).should == "foo__one__some_items"
         end
+
+        it "should call the TableNames.table_name method with registered superclass values" do
+          ctx, p, c = create_context_with_parent_child_models(:model_space_key=>"one")
+          v = double('version')
+          TableNames.should_receive(:table_name).with(:foo, :one, "parents", 2, v)
+          ctx.send(:table_name_from_model_version, c, v)
+        end
       end
 
       describe "get_current_model_version & set_working_model_version & get_working_model_version & delete_working_model_version" do
@@ -389,6 +405,26 @@ module ActiveRecord
           ctx.send(:get_working_model_version, im).should == 2
           ctx.send(:delete_working_model_version, im)
           ctx.send(:get_working_model_version, im).should == nil
+        end
+
+        it "should set and get working model versions using the registered superclass" do
+          ctx, p, c = create_context_with_parent_child_models(:model_space_key=>"one")
+
+          ctx.send(:get_current_model_version, p).should == 1
+          ctx.send(:get_current_model_version, c).should == 1
+
+          ctx.send(:get_working_model_version, p).should == nil
+          ctx.send(:get_working_model_version, c).should == nil
+
+          ctx.send(:set_working_model_version, c, 2)
+
+          ctx.send(:get_working_model_version, p).should == 2
+          ctx.send(:get_working_model_version, c).should == 2
+
+          ctx.send(:delete_working_model_version, c)
+
+          ctx.send(:get_working_model_version, p).should == nil
+          ctx.send(:get_working_model_version, c).should == nil
         end
 
         it "should bork if called with an unregistered model" do
