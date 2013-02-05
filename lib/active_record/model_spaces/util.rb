@@ -43,6 +43,12 @@ module ActiveRecord
         superclasses = klass.ancestors.grep(Class).sort.take_while{|k| k < ActiveRecord::Base}
       end
 
+      def is_active_record_model?(klass)
+        superclasses = klass.ancestors.grep(Class).sort.take_while{|k| k <= ActiveRecord::Base}
+        superclasses.length > 1 &&
+          superclasses.include?(ActiveRecord::Base)
+      end
+
     end
 
   end

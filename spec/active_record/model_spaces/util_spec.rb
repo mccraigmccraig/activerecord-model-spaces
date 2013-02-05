@@ -81,6 +81,26 @@ module ActiveRecord
         end
       end
 
+      describe "is_active_record_model?" do
+        it "should return true for direct or indirect subclasses of ActiveRecord::Base" do
+          c1 = Class.new(ActiveRecord::Base)
+          Util.is_active_record_model?(c1).should == true
+
+          c2 = Class.new(c1)
+          Util.is_active_record_model?(c2).should ==true
+        end
+
+        it "should return false for non-subclasses of ActiveRecord::Base" do
+          Util.is_active_record_model?(ActiveRecord::Base).should == false
+
+          c1 = Class.new
+          Util.is_active_record_model?(c1).should == false
+
+          c2 = Class.new
+          Util.is_active_record_model?(c2).should == false
+        end
+      end
+
     end
   end
 end
