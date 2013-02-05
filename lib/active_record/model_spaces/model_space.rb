@@ -45,8 +45,13 @@ module ActiveRecord
         get_model_registration(model)[:base_table_name] = table_name
       end
 
+      def registered_model(model)
+        get_model_registration(model)[:model]
+      end
+
       def base_table_name(model)
-        get_model_registration(model)[:base_table_name] || TableNames.base_table_name(model)
+        r = get_model_registration(model)
+        r[:base_table_name] || TableNames.base_table_name(r[:model])
       end
 
       def registered_model_keys
@@ -54,7 +59,7 @@ module ActiveRecord
       end
 
       def is_registered?(model)
-        !!get_model_registration(model)
+        !!unchecked_get_model_registration(model)
       end
 
       def create_context(model_space_key)
@@ -63,11 +68,17 @@ module ActiveRecord
 
       private
 
-      def get_model_registration(model)
+      def unchecked_get_model_registration(model)
         mc = all_model_superclasses(model).find do |klass|
           model_registrations[name_from_model(klass)]
         end
         self.model_registrations[name_from_model(mc)] if mc
+      end
+
+      def get_model_registration(model)
+        r = unchecked_get_model_registration(model)
+        raise "model: #{model.to_s} is not registered in ModelSpace: #{name}" if !r
+        r
       end
 
       def set_model_registration(model, registration)

@@ -61,22 +61,40 @@ module ActiveRecord
         end
       end
 
-      describe "get_model_registration" do
+      describe "registered_model" do
+        it "should return the registered model for a model" do
+          ms = ModelSpace.new(:foo)
+          m = create_model('BarModel')
+          ms.register_model(m)
+          ms.registered_model(m).should == m
+        end
 
+        it "should return the registered superclass for a model" do
+          ms = ModelSpace.new(:foo)
+          m1 = create_model('BarModel')
+          m2 = create_model('BazModel', m1)
+
+          ms.register_model(m1)
+
+          ms.registered_model(m2).should == m1
+        end
+      end
+
+      describe "unchecked_get_model_registration" do
         it "should retrieve a model registration" do
           ms = ModelSpace.new(:foo)
           m = create_model('BarModel')
 
           ms.register_model(m)
-          ms.send(:get_model_registration, m).should == {:model=>m}
+          ms.send(:unchecked_get_model_registration, m).should == {:model=>m}
           ms.is_registered?(m).should == true
         end
 
-        it "should return null if a model is not registered" do
+        it "should return nil if a model is not registered" do
           ms = ModelSpace.new(:foo)
           m = create_model('BarModel')
-          ms.send(:get_model_registration, m).should == nil
           ms.is_registered?(m).should == false
+          ms.send(:unchecked_get_model_registration, m).should == nil
         end
 
         it "should check model superclasses when searching for a registration" do
@@ -85,8 +103,19 @@ module ActiveRecord
           m2 = create_model('BazModel', m)
           ms.register_model(m, :history_versions=>2)
 
-          ms.send(:get_model_registration, m2).should == {:model=>m, :history_versions=>2}
+          ms.send(:unchecked_get_model_registration, m2).should == {:model=>m, :history_versions=>2}
           ms.is_registered?(m2).should == true
+        end
+      end
+
+      describe "get_model_registration" do
+        it "should bork if a model is not registered" do
+          ms = ModelSpace.new(:foo)
+          m = create_model('BarModel')
+          ms.is_registered?(m).should == false
+          expect{
+            ms.send(:get_model_registration, m)
+          }.to raise_error /BarModel is not registered in ModelSpace: foo/
         end
       end
 
@@ -149,8 +178,19 @@ module ActiveRecord
           r = ms.register_model(m)
           r.should == ms # registering a model returns the ModelSpace
 
-          r.registered_model_keys.include?("BarModel").should == true
-          r.base_table_name(m).should == "bar_models"
+          ms.registered_model_keys.include?("BarModel").should == true
+          ms.base_table_name(m).should == "bar_models"
+        end
+
+        it "should use the registered superclass to determine the base_table_name if the class is not registered" do
+          ms = ModelSpace.new(:foo)
+
+          m1 = create_model('BarModel')
+          m2 = create_model('BazModel', m1)
+
+          ms.register_model(m1)
+
+          ms.base_table_name(m2).should == "bar_models"
         end
       end
 
