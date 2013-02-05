@@ -129,28 +129,28 @@ module ActiveRecord
           ctx.should_receive(:commit)
           ms.should_receive(:create_context).with(:one).and_return(ctx)
           ctx.should_receive(:table_name).with(m)
-          r.with_model_space_context(:foo_space, :one) {r.table_name(m)}
+          r.with_context(:foo_space, :one) {r.table_name(m)}
 
           ctx2 = double('foo-two-context')
           ctx2.stub(:model_space).and_return(ms)
           ctx2.should_receive(:commit)
           ms.should_receive(:create_context).with(:two).and_return(ctx2)
           ctx2.should_receive(:current_table_name).with(m)
-          r.with_model_space_context(:foo_space, :two) {r.current_table_name(m)}
+          r.with_context(:foo_space, :two) {r.current_table_name(m)}
 
           ctx3 = double('foo-three-context')
           ctx3.stub(:model_space).and_return(ms)
           ctx3.should_receive(:commit)
           ms.should_receive(:create_context).with(:three).and_return(ctx3)
           ctx3.should_receive(:working_table_name).with(m)
-          r.with_model_space_context(:foo_space, :three) {r.working_table_name(m)}
+          r.with_context(:foo_space, :three) {r.working_table_name(m)}
 
           ctx4 = double('foo-four-context')
           ctx4.stub(:model_space).and_return(ms)
           ctx4.should_receive(:commit)
           ms.should_receive(:create_context).with(:four).and_return(ctx4)
           ctx4.should_receive(:hoover)
-          r.with_model_space_context(:foo_space, :four) {r.hoover(m)}
+          r.with_context(:foo_space, :four) {r.hoover(m)}
 
           ctx5 = double('foo-five-context')
           ctx5.stub(:model_space).and_return(ms)
@@ -160,7 +160,7 @@ module ActiveRecord
             model.should == m
             block.call
           }
-          r.with_model_space_context(:foo_space, :five) {
+          r.with_context(:foo_space, :five) {
             r.new_version(m){ :result }.should == :result
           }
 
@@ -172,18 +172,18 @@ module ActiveRecord
             model.should == m
             block.call
           }
-          r.with_model_space_context(:foo_space, :six) {
+          r.with_context(:foo_space, :six) {
             r.updated_version(m){ :result }.should == :result
           }
         end
       end
 
-      describe "with_model_space_context" do
+      describe "with_context" do
 
         it "should bork if a non-existent model_space_name is given" do
           expect {
             r = Registry.new
-            r.with_model_space_context(:foo_space, "moar_foos") {}
+            r.with_context(:foo_space, "moar_foos") {}
           }.to raise_error /no such model space: foo_space/
         end
 
@@ -199,7 +199,7 @@ module ActiveRecord
 
           ms.should_receive(:create_context).with("moar_foos").and_return(ctx)
 
-          r.with_model_space_context(:foo_space, "moar_foos") do
+          r.with_context(:foo_space, "moar_foos") do
             r.send(:context_stack).last.should == ctx
             r.send(:merged_context)[:foo_space].should == ctx
             :result
@@ -222,10 +222,10 @@ module ActiveRecord
           ms.should_receive(:create_context).with("moar_foos").and_return(ctx)
           ms.should_receive(:create_context).with("even_moar_foos").and_return(ctx2)
 
-          r.with_model_space_context(:foo_space, "moar_foos") do
+          r.with_context(:foo_space, "moar_foos") do
 
             expect {
-              r.with_model_space_context(:foo_space, "even_moar_foos") do
+              r.with_context(:foo_space, "even_moar_foos") do
               end
             }.to raise_error /foo_space: already has an active context/
           end
@@ -251,11 +251,11 @@ module ActiveRecord
           bctx.should_receive(:commit)
           bms.should_receive(:create_context).with("moar_bars").and_return(bctx)
 
-          r.with_model_space_context(:foo_space, "moar_foos") do
+          r.with_context(:foo_space, "moar_foos") do
             r.send(:context_stack).last.should == fctx
             r.send(:merged_context).should == {:foo_space=>fctx}
 
-            r.with_model_space_context(:bar_space, "moar_bars") do
+            r.with_context(:bar_space, "moar_bars") do
               r.send(:context_stack).last.should == bctx
               r.send(:merged_context).should == {:foo_space=>fctx, :bar_space=>bctx}
               :inner_result
@@ -266,6 +266,19 @@ module ActiveRecord
             :outer_result
           end.should == :outer_result
 
+        end
+      end
+
+      describe "kill_context" do
+        it "should call kill_context on the named model_space" do
+          r = Registry.new
+          m = create_model('FooModel')
+          r.register_model(m, :foo_space)
+
+          ms = r.send(:get_model_space, :foo_space)
+          ms.should_receive(:kill_context).with(:one)
+
+          r.kill_context(:foo_space, :one)
         end
       end
 
@@ -388,7 +401,7 @@ module ActiveRecord
 
           ms.should_receive(:create_context).with("moar_foos").and_return(ctx)
 
-          r.with_model_space_context(:foo_space, "moar_foos") do
+          r.with_context(:foo_space, "moar_foos") do
             r.send(:unchecked_get_context_for_model, m).should == ctx
           end
         end
@@ -445,7 +458,7 @@ module ActiveRecord
 
           ms.should_receive(:create_context).with("moar_foos").and_return(ctx)
 
-          r.with_model_space_context(:foo_space, "moar_foos") do
+          r.with_context(:foo_space, "moar_foos") do
             r.send(:get_context_for_model, m).should == ctx
           end
 

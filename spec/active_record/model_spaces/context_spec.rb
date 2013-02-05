@@ -114,6 +114,37 @@ module ActiveRecord
         [ctx, im, um, om]
       end
 
+      describe "drop_tables" do
+        it "should drop all tables for all models associated with a given model_space and model_space_key" do
+          ctx, im, um, om = create_context_with_three_models
+          ms = ctx.model_space
+
+          Util.stub(:model_from_name).with("Item").and_return(im)
+          Util.stub(:model_from_name).with("User").and_return(um)
+          Util.stub(:model_from_name).with("Other").and_return(om)
+
+          imtm = double('ItemTableManager')
+          TableManager.should_receive(:new).with(im).and_return(imtm)
+          umtm = double("UserTableManager")
+          TableManager.should_receive(:new).with(um).and_return(umtm)
+          omtm = double('OtherTableManager')
+          TableManager.should_receive(:new).with(om).and_return(omtm)
+
+          imtm.should_receive(:drop_table).with("foo__one__items")
+          imtm.should_receive(:drop_table).with("foo__one__items__1")
+          imtm.should_receive(:drop_table).with("foo__one__items__2")
+
+          umtm.should_receive(:drop_table).with("foo__one__users")
+          umtm.should_receive(:drop_table).with("foo__one__users__1")
+
+          omtm.should_receive(:drop_table).with("foo__one__others")
+
+
+          Context.drop_tables(ms, :one)
+
+        end
+      end
+
       describe "base_table_name" do
         it "should ask the ModelSpace for the base_table_name" do
           ctx, m = create_context_with_one_model

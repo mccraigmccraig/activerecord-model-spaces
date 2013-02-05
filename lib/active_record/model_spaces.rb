@@ -23,8 +23,12 @@ module ActiveRecord
 
     module_function
 
-    def with_model_space_context(model_space_name, model_space_key, &block)
-      REGISTRY.with_model_space_context(model_space_name, model_space_key, &block)
+    def with_context(model_space_name, model_space_key, &block)
+      REGISTRY.with_context(model_space_name, model_space_key, &block)
+    end
+
+    def kill_context(model_space_name, model_space_key)
+      REGISTRY.kill_context(model_space_name, model_space_key)
     end
 
     def enforce_context

@@ -71,6 +71,10 @@ module ActiveRecord
         ctx = Context.new(self, model_space_key, ModelSpaces.create_persistor)
       end
 
+      def kill_context(model_space_key)
+        Context.drop_tables(self, model_space_key)
+      end
+
       private
 
       def unchecked_get_model_registration(model)

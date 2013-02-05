@@ -31,11 +31,11 @@ Each ModelSpace may have many models associated with it, but each model may only
 
 At this point, the model can be used in ModelSpaces context, and data will be sourced from a different table according to the context, the context key and any history version. Outside of a ModelSpaces context the model will source data from it's usual table
 
-To establish a context use the <tt>with_model_space_context</tt> method, which provides a key to be used along with the ModelSpace name to generate the name of the database table to be used by the model for the duration of the context
+To establish a context use the <tt>with_context</tt> method, which provides a key to be used along with the ModelSpace name to generate the name of the database table to be used by the model for the duration of the context
 
   AModel.table_name # "unusual_models"
 
-  ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
+  ActiveRecord::ModelSpaces.with_context(:metadata, :one) do
     AModel.table_name # "metadata__one__unusual_models"
   end
 
@@ -49,7 +49,7 @@ If a model is declared as having history_versions then historical copies of the 
     in_model_space :metadata, :history_versions=>1
   end
 
-  ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
+  ActiveRecord::ModelSpaces.with_context(:metadata, :one) do
     AModel.table_name # "metadata__one__unusual_models"
 
     AModel.new_version do
@@ -67,7 +67,7 @@ If a model is declared as having history_versions then historical copies of the 
     BModel.table_name # "metadata__one__b_models__1"
   end
 
-  ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
+  ActiveRecord::ModelSpaces.with_context(:metadata, :one) do
     AModel.table_name # "metadata__one__unusual_models__1"
     BModel.table_name # "metadata__one__b_models__1"
 
@@ -78,7 +78,7 @@ If a model is declared as having history_versions then historical copies of the 
     AModel.table_name # "metadata__one__unusual_models"
   end
 
-  ActiveRecord::ModelSpaces.with_model_space_context(:metadata, :one) do
+  ActiveRecord::ModelSpaces.with_context(:metadata, :one) do
     AModel.table_name # "metadata__one__unusual_models"
   end
 

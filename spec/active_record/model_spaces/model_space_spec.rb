@@ -238,7 +238,20 @@ module ActiveRecord
         end
       end
 
+      describe "kill_context" do
+        it "should call drop_tables on Context with itself and the given model_space key" do
+          ms = ModelSpace.new(:foo)
+
+          Context.should_receive(:drop_tables).with(ms, :one)
+
+          ms.kill_context(:one)
+        end
+
+      end
+
     end
+
+
 
     describe "create_persistor" do
       it "should create a persistor with the default connection and empty table-name" do

@@ -36,6 +36,21 @@ module ActiveRecord
         end
       end
 
+      def self.drop_tables(model_space, model_space_key)
+        model_space.registered_model_keys.map do |model_name|
+          m = Util.model_from_name(model_name)
+          tm = TableManager.new(m)
+
+          all_table_names = (0..model_space.history_versions(m)).map do |v|
+            TableNames.table_name(model_space.name, model_space_key, model_space.base_table_name(m), model_space.history_versions(m), v)
+          end
+
+          all_table_names.map do |table_name|
+            tm.drop_table(table_name)
+          end
+        end
+      end
+
       # implements the Model.table_name method
       def table_name(model)
         version = get_working_model_version(model) || get_current_model_version(model)
@@ -144,7 +159,7 @@ module ActiveRecord
       private
 
       def table_name_from_model_version(model, version)
-        TableNames.table_name(model_space.name, model_space_key, base_table_name(model), model_space.history_versions(model), version)
+        TableNames.table_name(model_space.name, model_space_key, model_space.base_table_name(model), model_space.history_versions(model), version)
       end
 
       def get_current_model_version(model)

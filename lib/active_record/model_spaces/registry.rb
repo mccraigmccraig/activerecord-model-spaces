@@ -78,7 +78,7 @@ module ActiveRecord
       # execute a block with a ModelSpace context.
       # only a single context can be active for a given ModelSpace on any Thread at
       # any time, though different ModelSpaces may have active contexts concurrently
-      def with_model_space_context(model_space_name, model_space_key, &block)
+      def with_context(model_space_name, model_space_key, &block)
 
         ms = get_model_space(model_space_name)
         raise "no such model space: #{model_space_name}" if !ms
@@ -96,6 +96,10 @@ module ActiveRecord
           context_stack.pop
           self.merged_context = old_merged_context
         end
+      end
+
+      def kill_context(model_space_name, model_space_key)
+        get_model_space(model_space_name).kill_context(model_space_key)
       end
 
       private
