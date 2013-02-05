@@ -68,11 +68,12 @@ module ActiveRecord
       end
 
       def create_context(model_space_key)
-        ctx = Context.new(self, model_space_key, ModelSpaces.create_persistor)
+        Context.new(self, model_space_key, ModelSpaces.create_persistor)
       end
 
       def kill_context(model_space_key)
         Context.drop_tables(self, model_space_key)
+        true
       end
 
       private

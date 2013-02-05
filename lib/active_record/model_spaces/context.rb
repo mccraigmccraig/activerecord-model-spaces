@@ -45,7 +45,7 @@ module ActiveRecord
             TableNames.table_name(model_space.name, model_space_key, model_space.base_table_name(m), model_space.history_versions(m), v)
           end
 
-          all_table_names.map do |table_name|
+          all_table_names.each do |table_name|
             tm.drop_table(table_name)
           end
         end
