@@ -29,7 +29,7 @@ module ActiveRecord
       def register_model(model, opts=nil)
         opts ||= {}
         ModelSpaces.check_model_registration_keys(opts.keys)
-        set_model_registration(model, opts)
+        set_model_registration(model, opts.merge(:model=>model))
         self
       end
 

@@ -68,7 +68,7 @@ module ActiveRecord
           m = create_model('BarModel')
 
           ms.register_model(m)
-          ms.send(:get_model_registration, m).should == {}
+          ms.send(:get_model_registration, m).should == {:model=>m}
           ms.is_registered?(m).should == true
         end
 
@@ -85,7 +85,7 @@ module ActiveRecord
           m2 = create_model('BazModel', m)
           ms.register_model(m, :history_versions=>2)
 
-          ms.send(:get_model_registration, m2).should == {:history_versions=>2}
+          ms.send(:get_model_registration, m2).should == {:model=>m, :history_versions=>2}
           ms.is_registered?(m2).should == true
         end
       end
