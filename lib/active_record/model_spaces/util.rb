@@ -21,7 +21,7 @@ module ActiveRecord
         begin
           Kernel.require ActiveSupport::Inflector.underscore(classname)
           Kernel.eval(classname)
-        rescue
+        rescue Exception=>e
           false
         end
       end

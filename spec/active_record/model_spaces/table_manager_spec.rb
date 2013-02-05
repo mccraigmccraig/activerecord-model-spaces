@@ -102,11 +102,18 @@ module ActiveRecord
       describe "get_table_schema_copier" do
         it "should get a TableSchemaCopier specialised for the connection adapter, if available" do
           c = double('connection')
-          c.stub(:adapter_name)
+          c.stub(:adapter_name).and_return('MySQL')
+
+          tm = create_table_manager
+          tm.send(:get_table_schema_copier, c).should == MySQLTableSchemaCopier
         end
 
         it "should get a DefaultTableSchemaCopier if no specialised TableSchemaCopier available" do
+          c = double('connection')
+          c.stub(:adapter_name).and_return('Random')
 
+          tm = create_table_manager
+          tm.send(:get_table_schema_copier, c).should == DefaultTableSchemaCopier
         end
       end
 
