@@ -30,11 +30,17 @@ module ActiveRecord
         end
       end
 
+      def create_model(name, superklass=ActiveRecord::Base)
+        m = Class.new(superklass)
+        m.stub(:to_s).and_return(name)
+        m.stub(:inspect).and_return(name)
+        m
+      end
+
       describe "reset!" do
         it "should reset model and model_space registrations" do
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return("FooModel")
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
           r.send(:get_model_space, :foo_space).is_registered?(m).should == true
           r.reset!
@@ -46,8 +52,7 @@ module ActiveRecord
       describe "register_model" do
         it "should register a model" do
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return("FooModel")
+          m = create_model('FooModeln')
           r.register_model(m, :foo_space)
           r.send(:get_model_space, :foo_space).is_registered?(m).should == true
         end
@@ -56,13 +61,11 @@ module ActiveRecord
       describe "base_table_name" do
         it "should retrieve the models base_table_name" do
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return("FooModel")
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
           r.base_table_name(m).should == "foo_models"
 
-          m2 = double('bar-model')
-          m2.stub(:to_s).and_return("BarModel")
+          m2 = create_model('BarModel')
           r.register_model(m2, :foo_space, :base_table_name=>"moar_models")
           r.base_table_name(m2).should == "moar_models"
         end
@@ -71,8 +74,7 @@ module ActiveRecord
       describe "set_base_table_name" do
         it "should set a base_table_name" do
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return("FooModel")
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
           r.base_table_name(m).should == "foo_models"
           r.set_base_table_name(m, "random_models")
@@ -81,8 +83,7 @@ module ActiveRecord
 
         it "should provide an informative error if the model is not yet registered to a model space" do
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return("FooModel")
+          m = create_model('FooModel')
 
           expect {
             r.set_base_table_name(m, "random_models")
@@ -93,8 +94,7 @@ module ActiveRecord
       describe "table_name" do
         it "should call base_table_name on the model's ModelSpace if no context is registered and !enforce_context" do
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return('FooModel')
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           ms = r.send(:get_model_space, :foo_space)
@@ -105,8 +105,7 @@ module ActiveRecord
 
         it "should bork if no context is registered for the model's ModelSpace and enforce_context" do
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return('FooModel')
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           r.set_enforce_context(true)
@@ -121,8 +120,7 @@ module ActiveRecord
         it "should call table_name on the live context" do
 
           r = Registry.new
-          m = double('foo-model')
-          m.stub(:to_s).and_return("FooModel")
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           ms = r.send(:get_model_space, :foo_space)
@@ -191,7 +189,7 @@ module ActiveRecord
 
         it "should push a new context to the stack and create a new merged contexts hash if stack empty" do
           r = Registry.new
-          m = double('foo-model')
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           ms = r.send(:get_model_space, :foo_space)
@@ -210,7 +208,7 @@ module ActiveRecord
 
         it "should resist the attempt to register a context for a model-space which already has a context" do
           r = Registry.new
-          m = double('foo-model')
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           ms = r.send(:get_model_space, :foo_space)
@@ -237,7 +235,7 @@ module ActiveRecord
         it "should push a new context to the stack and create a new merged contexts hash if stack not empty" do
           r = Registry.new
 
-          fm = double('foo-model')
+          fm = create_model('FooModel')
           r.register_model(fm, :foo_space)
           fms = r.send(:get_model_space, :foo_space)
           fctx = double('foo-context')
@@ -245,7 +243,7 @@ module ActiveRecord
           fctx.should_receive(:commit)
           fms.should_receive(:create_context).with("moar_foos").and_return(fctx)
 
-          bm = double('bar-model')
+          bm = create_model('BarModel')
           r.register_model(bm, :bar_space)
           bms = r.send(:get_model_space, :bar_space)
           bctx = double('bar-context')
@@ -289,9 +287,34 @@ module ActiveRecord
         end
       end
 
+      describe "unchecked_get_model_space_for_model" do
+        it "should retrieve a model space for a model" do
+          m = create_model('FooModel')
+          r = Registry.new
+          r.register_model(m, :foo_space)
+          r.send(:unchecked_get_model_space_for_model, m).should == r.send(:get_model_space, :foo_space)
+        end
+
+        it "should return nil if the model is not registered to a model space" do
+          m = create_model('FooModel')
+          r = Registry.new
+          r.send(:unchecked_get_model_space_for_model, m).should == nil
+        end
+
+        it "should check the superclass chain for registrations and return the model space for the nearest registered superclass" do
+          m1 = create_model('FooModel')
+          m2 = create_model('BarModel', m1)
+
+          r = Registry.new
+          r.register_model(m1, :foo_space)
+          r.send(:unchecked_get_model_space_for_model, m2).should == r.send(:get_model_space, :foo_space)
+        end
+      end
+
+
       describe "model spaces by model" do
         it "should register a ModelSpace for a model" do
-          m = double('model')
+          m = create_model('FooModel')
           ms = double('model-space')
 
           r = Registry.new
@@ -301,8 +324,7 @@ module ActiveRecord
         end
 
         it "should bork if a model is not registered" do
-          m = double('model')
-          m.stub(:to_s).and_return("A::SomeModel")
+          m = create_model('A::SomeModel')
 
           r = Registry.new
           expect {
@@ -311,8 +333,7 @@ module ActiveRecord
         end
 
         it "should re-register if a model is registered twice" do
-          m = double('a-model')
-          m.stub(:to_s).and_return("AModel")
+          m = create_model('AModel')
 
           r = Registry.new
           r.register_model(m, :foo_space, :history_versions=>2)
@@ -357,7 +378,7 @@ module ActiveRecord
       describe "unchecked_get_context_for_model" do
         it "should return an active context" do
           r = Registry.new
-          m = double('foo-model')
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           ms = r.send(:get_model_space, :foo_space)
@@ -374,13 +395,13 @@ module ActiveRecord
 
         it "should return nil if the model_space of the model is unknown" do
           r = Registry.new
-          m = double('foo-model')
+          m = create_model('FooModel')
           r.send(:unchecked_get_context_for_model, m).should == nil
         end
 
         it "should return nil if the model_space is known but there is no active context" do
           r = Registry.new
-          m = double('foo-model')
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           ms = r.send(:get_model_space, :foo_space)
@@ -394,8 +415,7 @@ module ActiveRecord
         it "should bork if the model is not registered to a model space" do
           r = Registry.new
 
-          m = double('foo-model')
-          m.stub(:to_s).and_return('A::Foo')
+          m = create_model('A::Foo')
 
           expect {
             r.send(:get_context_for_model, m)
@@ -405,9 +425,7 @@ module ActiveRecord
         it "should bork if the model's ModelSpace has no current context" do
           r = Registry.new
 
-          m = double('foo-model')
-          m.stub(:to_s).and_return('A::Foo')
-
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           expect {
@@ -417,7 +435,7 @@ module ActiveRecord
 
         it "should return the registered context for the model's ModelSpace" do
           r = Registry.new
-          m = double('foo-model')
+          m = create_model('FooModel')
           r.register_model(m, :foo_space)
 
           ms = r.send(:get_model_space, :foo_space)

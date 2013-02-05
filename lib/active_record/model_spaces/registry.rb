@@ -113,7 +113,10 @@ module ActiveRecord
       end
 
       def unchecked_get_model_space_for_model(model)
-        model_spaces_by_models[name_from_model(model)]
+        mc = all_model_superclasses(model).find do |klass|
+          model_spaces_by_models[name_from_model(klass)]
+        end
+        model_spaces_by_models[name_from_model(mc)] if mc
       end
 
       def get_model_space_for_model(model)
