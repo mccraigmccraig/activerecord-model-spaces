@@ -26,9 +26,9 @@ module ActiveRecord
         @model_registrations = {}
       end
 
-      def register_model(model, opts={})
+      def register_model(model, opts=nil)
+        opts ||= {}
         ModelSpaces.check_model_registration_keys(opts.keys)
-        opts[:history_versions] ||= 0
         set_model_registration(model, opts)
         self
       end
@@ -38,7 +38,7 @@ module ActiveRecord
       end
 
       def history_versions(model)
-        get_model_registration(model)[:history_versions]
+        get_model_registration(model)[:history_versions] || 0
       end
 
       def set_base_table_name(model, table_name)
@@ -64,7 +64,10 @@ module ActiveRecord
       private
 
       def get_model_registration(model)
-        self.model_registrations[name_from_model(model)]
+        mc = all_model_superclasses(model).find do |klass|
+          model_registrations[name_from_model(klass)]
+        end
+        self.model_registrations[name_from_model(mc)] if mc
       end
 
       def set_model_registration(model, registration)

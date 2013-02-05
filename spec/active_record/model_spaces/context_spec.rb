@@ -7,13 +7,19 @@ module ActiveRecord
 
     describe Context do
 
+      def create_model(name, superklass=ActiveRecord::Base)
+        m = Class.new(superklass)
+        m.stub(:to_s).and_return(name)
+        m.stub(:inspect).and_return(name)
+        m
+      end
+
+
       describe "initialize" do
 
         it "should initialize with a model_space, model_space_key and persistor and create necessary tables" do
-          im = double('items-model')
-          im.stub(:to_s).and_return("Items")
-          um = double('users-model')
-          um.stub(:to_s).and_return("Users")
+          im = create_model('Items')
+          um = create_model('Users')
 
           ms = ModelSpace.new(:foo_space)
           ms.register_model(im)
@@ -69,37 +75,39 @@ module ActiveRecord
         Context.new(ms, msk, p)
       end
 
-      def create_context_with_one_model(im, attrs={})
-        im.stub(:to_s).and_return("Items")
+      def create_context_with_one_model(attrs={})
+        im = create_model('Item')
         ms = ModelSpace.new(:foo)
         ms.register_model(im, :history_versions=>2, :base_table_name=>"some_items")
-        create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
+        ctx = create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Item"=>1}))
+        [ctx, im]
       end
 
-      def create_context_with_two_models(im, um, attrs={})
-        im.stub(:to_s).and_return("Items")
-        um.stub(:to_s).and_return("Users")
+      def create_context_with_two_models(attrs={})
+        im = create_model('Item')
+        um = create_model('User')
         ms = ModelSpace.new(:foo)
         ms.register_model(im, :history_versions=>2)
         ms.register_model(um, :history_versions=>1)
-        create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
+        ctx = create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Item"=>1}))
+        [ctx, im, um]
       end
 
-      def create_context_with_three_models(im, um, om, attrs={})
-        im.stub(:to_s).and_return("Items")
-        um.stub(:to_s).and_return("Users")
-        om.stub(:to_s).and_return("Others")
+      def create_context_with_three_models(attrs={})
+        im = create_model('Item')
+        um = create_model('User')
+        om = create_model('Other')
         ms = ModelSpace.new(:foo)
         ms.register_model(im, :history_versions=>2)
         ms.register_model(um, :history_versions=>1)
         ms.register_model(om, :history_versions=>0)
-        create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Items"=>1}))
+        ctx = create_context(attrs.merge(:model_space=>ms, :current_model_versions=>{"Item"=>1}))
+        [ctx, im, um, om]
       end
 
       describe "base_table_name" do
         it "should ask the ModelSpace for the base_table_name" do
-          m = double('model')
-          ctx = create_context_with_one_model(m)
+          ctx, m = create_context_with_one_model
           ctx.model_space.should_receive(:base_table_name).with(m)
           ctx.base_table_name(m)
         end
@@ -107,15 +115,13 @@ module ActiveRecord
 
       describe "table_name" do
         it "should return the current_model_version based table_name if present" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx, im = create_context_with_one_model(:model_space_key=>"one")
           TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, 1)
           ctx.table_name(im)
         end
 
         it "should return the working_model_version based table_name if present" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx,im = create_context_with_one_model(:model_space_key=>"one")
           ctx.send(:set_working_model_version, im, 2)
           TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, 2)
           ctx.table_name(im)
@@ -124,8 +130,7 @@ module ActiveRecord
 
       describe "hoovered_table_name" do
         it "should return the table_name for the model with version 0" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx,im = create_context_with_one_model(:model_space_key=>"one")
           TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, 0)
           ctx.hoovered_table_name(im)
         end
@@ -133,8 +138,7 @@ module ActiveRecord
 
       describe "current_table_name" do
         it "should return the current_model_version based table_name" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx,im = create_context_with_one_model(:model_space_key=>"one")
           ctx.should_receive(:table_name_from_model_version).with(im, 1)
           ctx.current_table_name(im)
 
@@ -147,8 +151,7 @@ module ActiveRecord
 
       describe "next_table_name" do
         it "should return the next version based table_name" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx,im = create_context_with_one_model(:model_space_key=>"one")
           ctx.should_receive(:table_name_from_model_version).with(im, 2)
           ctx.next_table_name(im)
 
@@ -161,8 +164,7 @@ module ActiveRecord
 
       describe "working_table_name" do
         it "should return the next version based table name or nil if no working version has been registered " do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx,im = create_context_with_one_model(:model_space_key=>"one")
           ctx.working_table_name(im).should == nil
 
           ctx.rspec_reset
@@ -174,8 +176,7 @@ module ActiveRecord
 
       describe "new_version" do
         it "should just call the block if the model already has a working version" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx,im = create_context_with_one_model(:model_space_key=>"one")
           ctx.send(:set_working_model_version, im, 2)
           ctx.send(:get_current_model_version, im).should == 1
           ctx.send(:get_working_model_version, im).should == 2
@@ -187,8 +188,7 @@ module ActiveRecord
         end
 
         it "should truncate the table and call the block if the model has no history versions and !copy_old_version" do
-          om = double('others-model')
-          ctx = create_context_with_three_models(double('items-model'), double('users-model'), om, :model_space_key=>"one")
+          ctx, im, um, om = create_context_with_three_models(:model_space_key=>"one")
 
           tm = double('table-manager')
           TableManager.stub(:new).and_return(tm)
@@ -199,8 +199,7 @@ module ActiveRecord
         end
 
         it "should just call the block if the model has no history versions and copy_old_version" do
-          om = double('others-model')
-          ctx = create_context_with_three_models(double('items-model'), double('users-model'), om, :model_space_key=>"one")
+          ctx, im, um, om = create_context_with_three_models(:model_space_key=>"one")
 
           tm = double('table-manager')
           TableManager.stub(:new).and_return(tm)
@@ -210,11 +209,7 @@ module ActiveRecord
         end
 
         it "should recreate the next_version table, set the working version and call the block if !copy_old_version" do
-          im = double('items-model')
-          um = double('users-model')
-          om = double('others-model')
-
-          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+          ctx, im, um, om = create_context_with_three_models(:model_space_key=>"one")
 
           imtm = double('im-table-manager')
           TableManager.stub(:new).with(im).and_return(imtm)
@@ -245,11 +240,7 @@ module ActiveRecord
         end
 
         it "should recreate the next_version table, set the working version, copy the previous version data and call the block if copy_old_version" do
-          im = double('items-model')
-          um = double('users-model')
-          om = double('others-model')
-
-          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+          ctx, im, um, om = create_context_with_three_models(:model_space_key=>"one")
 
           imtm = double('im-table-manager')
           TableManager.stub(:new).with(im).and_return(imtm)
@@ -282,11 +273,7 @@ module ActiveRecord
         end
 
         it "should remove the working version if the supplied block borks" do
-          im = double('items-model')
-          um = double('users-model')
-          om = double('others-model')
-
-          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+          ctx, im, um, om = create_context_with_three_models(:model_space_key=>"one")
 
           imtm = double('im-table-manager')
           TableManager.stub(:new).with(im).and_return(imtm)
@@ -301,8 +288,7 @@ module ActiveRecord
         end
 
         it "should bork if a block is not supplied" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx, im = create_context_with_one_model(:model_space_key=>"one")
 
           expect {
             ctx.new_version(im)
@@ -312,8 +298,7 @@ module ActiveRecord
 
       describe "hoover" do
         it "should bork if there are any working versions" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx, im = create_context_with_one_model(:model_space_key=>"one")
           ctx.send(:set_working_model_version, im, 2)
 
           expect {
@@ -322,15 +307,15 @@ module ActiveRecord
         end
 
         it "should copy models to their base table, drop history tables and re-read model-versions" do
-          im = double('items-model')
-          um = double('users-model')
-          om = double('others-model')
+          ctx, im, um, om = create_context_with_three_models(:model_space_key=>"one")
 
-          ctx = create_context_with_three_models(im, um, om, :model_space_key=>"one")
+          Util.stub(:model_from_name).with("Item").and_return(im)
+          Util.stub(:model_from_name).with("User").and_return(um)
+          Util.stub(:model_from_name).with("Other").and_return(om)
 
           imtm = double('im-table-manager')
           TableManager.stub(:new).with(im).and_return(imtm)
-          TableManager.stub(:new).with("Items").and_return(imtm)
+          TableManager.stub(:new).with("Item").and_return(imtm)
           imtm.should_receive(:recreate_table).with('items', 'foo__one__items')
           imtm.should_receive(:copy_table).with('foo__one__items__1', 'foo__one__items')
           imtm.should_receive(:drop_table).with('foo__one__items__1')
@@ -338,14 +323,14 @@ module ActiveRecord
 
           umtm = double('um-table-manager')
           TableManager.stub(:new).with(um).and_return(umtm)
-          TableManager.stub(:new).with("Users").and_return(umtm)
+          TableManager.stub(:new).with("User").and_return(umtm)
           umtm.should_receive(:drop_table).with('foo__one__users__1')
 
           omtm = double('om-table-manager')
           TableManager.stub(:new).with(om).and_return(omtm)
-          TableManager.stub(:new).with("Others").and_return(omtm)
+          TableManager.stub(:new).with("Other").and_return(omtm)
 
-          ctx.persistor.should_receive(:update_model_space_model_versions).with("Items"=>0, "Users"=>0, "Others"=>0)
+          ctx.persistor.should_receive(:update_model_space_model_versions).with("Item"=>0, "User"=>0, "Other"=>0)
           ctx.should_receive(:read_versions)
 
 
@@ -356,8 +341,7 @@ module ActiveRecord
 
       describe "updated_version" do
         it "should call new_version with the copy_old_version flat set to true returning the result of the block" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx, im = create_context_with_one_model(:model_space_key=>"one")
 
           ctx.should_receive(:new_version).and_return do |model, copy_old_version, &block|
             model.should == im
@@ -371,12 +355,10 @@ module ActiveRecord
 
       describe "commit" do
         it "should call the persistor with the merge of the current and working model versions" do
-          im = double('items-model')
-          um = double('users-model')
-          ctx = create_context_with_two_models(im, um, :model_space_key=>"one")
+          ctx, im, um = create_context_with_two_models(:model_space_key=>"one")
           ctx.send(:set_working_model_version, um, 1)
 
-          ctx.persistor.should_receive(:update_model_space_model_versions).with(ctx.model_space.name, :one, {"Items"=>1, "Users"=>1})
+          ctx.persistor.should_receive(:update_model_space_model_versions).with(ctx.model_space.name, :one, {"Item"=>1, "User"=>1})
 
           ctx.commit
         end
@@ -384,8 +366,7 @@ module ActiveRecord
 
       describe "table_name_from_model_version" do
         it "should call the TableNames.table_name method" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx, im = create_context_with_one_model(:model_space_key=>"one")
 
           v = double('version')
           TableNames.should_receive(:table_name).with(:foo, :one, "some_items", 2, v)
@@ -400,8 +381,7 @@ module ActiveRecord
 
       describe "get_current_model_version & set_working_model_version & get_working_model_version & delete_working_model_version" do
         it "should set and get the working model version" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx, im = create_context_with_one_model(:model_space_key=>"one")
           ctx.send(:get_current_model_version, im).should == 1
 
           ctx.send(:get_working_model_version, im).should == nil
@@ -412,10 +392,9 @@ module ActiveRecord
         end
 
         it "should bork if called with an unregistered model" do
-          im = double('items-model')
-          ctx = create_context_with_one_model(im, :model_space_key=>"one")
+          ctx, im = create_context_with_one_model(:model_space_key=>"one")
 
-          rm = double('random-model')
+          rm = create_model('Random')
 
           expect {
             ctx.send(:get_current_model_version, rm)

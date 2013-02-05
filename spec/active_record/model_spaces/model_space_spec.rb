@@ -18,12 +18,18 @@ module ActiveRecord
 
       end
 
+      def create_model(name, superklass=ActiveRecord::Base)
+        m = Class.new(superklass)
+        m.stub(:to_s).and_return(name)
+        m.stub(:inspect).and_return(name)
+        m
+      end
+
       describe "register_model" do
 
         it "should register a model" do
           ms = ModelSpace.new(:foo)
-          m = double("bar-model")
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
           r = ms.register_model(m)
           r.should == ms # registering a model returns the ModelSpace
@@ -34,8 +40,7 @@ module ActiveRecord
 
         it "should register a model with history_versions" do
           ms = ModelSpace.new(:foo)
-          m = double("bar-model")
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
           r = ms.register_model(m, :history_versions=>3)
           r.should == ms # registering a model returns the ModelSpace
@@ -46,8 +51,7 @@ module ActiveRecord
 
         it "should register a model with a base_table_name" do
           ms = ModelSpace.new(:foo)
-          m = double("bar-model")
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
           r = ms.register_model(m, :base_table_name=>"a_random_name")
           r.should == ms # registering a model returns the ModelSpace
@@ -57,11 +61,39 @@ module ActiveRecord
         end
       end
 
+      describe "get_model_registration" do
+
+        it "should retrieve a model registration" do
+          ms = ModelSpace.new(:foo)
+          m = create_model('BarModel')
+
+          ms.register_model(m)
+          ms.send(:get_model_registration, m).should == {}
+          ms.is_registered?(m).should == true
+        end
+
+        it "should return null if a model is not registered" do
+          ms = ModelSpace.new(:foo)
+          m = create_model('BarModel')
+          ms.send(:get_model_registration, m).should == nil
+          ms.is_registered?(m).should == false
+        end
+
+        it "should check model superclasses when searching for a registration" do
+          ms = ModelSpace.new(:foo)
+          m = create_model('BarModel')
+          m2 = create_model('BazModel', m)
+          ms.register_model(m, :history_versions=>2)
+
+          ms.send(:get_model_registration, m2).should == {:history_versions=>2}
+          ms.is_registered?(m2).should == true
+        end
+      end
+
       describe "deregister_model" do
         it "should deregister a model" do
           ms = ModelSpace.new(:foo)
-          m = double('bar-model')
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
           ms.register_model(m)
           ms.is_registered?(m).should == true
@@ -73,11 +105,9 @@ module ActiveRecord
       describe "is_registered?" do
         it "should return true if a model is registered, false otherwise" do
           ms = ModelSpace.new(:foo)
-          m = double('bar-model')
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
-          m2 = double('baz-model')
-          m2.stub(:to_s).and_return('BazModel')
+          m2 = create_model('BazModel')
 
           ms.register_model(m)
           ms.is_registered?(m).should == true
@@ -89,8 +119,7 @@ module ActiveRecord
       describe "history_versions" do
         it "should return 0 if no history_versions were specified" do
           ms = ModelSpace.new(:foo)
-          m = double("bar-model")
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
           r = ms.register_model(m)
           r.should == ms # registering a model returns the ModelSpace
@@ -103,8 +132,7 @@ module ActiveRecord
       describe "set_base_table_name" do
         it "should set the models base_table_name" do
           ms = ModelSpace.new(:foo)
-          m = double('bar-model')
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
           ms.register_model(m)
           ms.base_table_name(m).should == "bar_models"
@@ -116,8 +144,7 @@ module ActiveRecord
       describe "base_table_name" do
         it "should use TableNames.base_table_name to determine the base_table_name if non is specified" do
           ms = ModelSpace.new(:foo)
-          m = double("bar-model")
-          m.stub(:to_s).and_return("BarModel")
+          m = create_model('BarModel')
 
           r = ms.register_model(m)
           r.should == ms # registering a model returns the ModelSpace

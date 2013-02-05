@@ -111,11 +111,12 @@ module ActiveRecord
         model_names = model_space.registered_model_keys
 
         new_versions = Hash[ model_names.map do |model_name|
-                               base_name = base_table_name(model_name)
-                               current_name = current_table_name(model_name)
-                               hoovered_name = hoovered_table_name(model_name)
+                               m = Util.model_from_name(model_name)
+                               base_name = base_table_name(m)
+                               current_name = current_table_name(m)
+                               hoovered_name = hoovered_table_name(m)
 
-                               tm = TableManager.new(model_name)
+                               tm = TableManager.new(m)
 
                                # copy to hoovered table
                                if current_name != hoovered_name
@@ -124,8 +125,8 @@ module ActiveRecord
                                end
 
                                # drop history tables
-                               (1..model_space.history_versions(model_name)).map do |v|
-                                 htn = table_name_from_model_version(model_name, v)
+                               (1..model_space.history_versions(m)).map do |v|
+                                 htn = table_name_from_model_version(m, v)
                                  tm.drop_table(htn)
                                end
 
