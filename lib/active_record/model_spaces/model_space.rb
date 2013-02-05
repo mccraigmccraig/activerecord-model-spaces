@@ -27,6 +27,7 @@ module ActiveRecord
       end
 
       def register_model(model, opts=nil)
+        raise "#{model} is not an ActiveRecord model Class" if !is_active_record_model?(model)
         opts ||= {}
         ModelSpaces.check_model_registration_keys(opts.keys)
         set_model_registration(model, opts.merge(:model=>model))

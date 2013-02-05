@@ -59,6 +59,15 @@ module ActiveRecord
           r.registered_model_keys.include?("BarModel").should == true
           r.base_table_name(m).should == "a_random_name"
         end
+
+        it "should bork if an attempt to register a non-ActiveRecord model is made" do
+          ms = ModelSpace.new(:foo)
+          m = create_model('FooModel', Object)
+
+          expect {
+            ms.register_model(m)
+          }.to raise_error /FooModel is not an ActiveRecord model Class/
+        end
       end
 
       describe "registered_model" do
