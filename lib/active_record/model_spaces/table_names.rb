@@ -13,9 +13,9 @@ module ActiveRecord
 
       def base_table_name(model)
         name_from_model(model).
-          instance_eval{|s| ActiveSupport::Inflector.demodulize(s)}.
-          instance_eval{|s| ActiveSupport::Inflector.underscore(s)}.
-          instance_eval{|s| ActiveSupport::Inflector.pluralize(s)}
+          instance_eval{ ActiveSupport::Inflector.demodulize(self)}.
+          instance_eval{ ActiveSupport::Inflector.underscore(self)}.
+          instance_eval{ ActiveSupport::Inflector.pluralize(self)}
       end
 
       def model_space_table_name(model_space_name, model_space_key, base_table_name)
