@@ -83,18 +83,32 @@ module ActiveRecord
         ms = get_model_space(model_space_name)
         raise "no such model space: #{model_space_name}" if !ms
 
-        old_merged_context = self.send(:merged_context)
-        ctx = ms.create_context(model_space_key)
-        context_stack << ctx
-        begin
-          self.merged_context = merge_context_stack
+        current_ctx = merged_context[ms.name]
 
-          r = block.call
-          ctx.commit
-          r
-        ensure
-          context_stack.pop
-          self.merged_context = old_merged_context
+        if current_ctx && current_ctx.model_space_key==model_space_key.to_sym
+
+          block.call # same context is already active
+
+        elsif current_ctx
+
+          raise "ModelSpace: #{model_space_name}: context with key #{current_ctx.model_space_key} already active"
+
+        else
+
+          old_merged_context = self.send(:merged_context)
+          ctx = ms.create_context(model_space_key)
+          context_stack << ctx
+          begin
+            self.merged_context = merge_context_stack
+
+            r = block.call
+            ctx.commit
+            r
+          ensure
+            context_stack.pop
+            self.merged_context = old_merged_context
+          end
+
         end
       end
 

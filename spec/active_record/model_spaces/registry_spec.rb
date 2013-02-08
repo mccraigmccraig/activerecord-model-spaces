@@ -214,23 +214,41 @@ module ActiveRecord
           ms = r.send(:get_model_space, :foo_space)
           ctx = double('context')
           ctx.stub(:model_space).and_return(ms)
+          ctx.stub(:model_space_key).and_return(:moar_foos)
           ctx.should_receive(:commit)
 
-          ctx2 = double('context-2')
-          ctx2.stub(:model_space).and_return(ms)
-
           ms.should_receive(:create_context).with("moar_foos").and_return(ctx)
-          ms.should_receive(:create_context).with("even_moar_foos").and_return(ctx2)
 
           r.with_context(:foo_space, "moar_foos") do
 
             expect {
               r.with_context(:foo_space, "even_moar_foos") do
               end
-            }.to raise_error /foo_space: already has an active context/
+            }.to raise_error /ModelSpace: foo_space: context with key moar_foos already active/
           end
         end
 
+        it "should just call the block if a context is registered for a model-space which already has a context with the same model-space-key" do
+          r = Registry.new
+          m = create_model('FooModel')
+          r.register_model(m, :foo_space)
+
+          ms = r.send(:get_model_space, :foo_space)
+          ctx = double('context')
+          ctx.stub(:model_space).and_return(ms)
+          ctx.stub(:model_space_key).and_return(:moar_foos)
+          ctx.should_receive(:commit)
+
+          ms.should_receive(:create_context).with(:moar_foos).and_return(ctx)
+
+          r.with_context(:foo_space, :moar_foos) do
+
+            r.with_context(:foo_space, "moar_foos") do
+              :one_million_pounds
+            end
+
+          end.should == :one_million_pounds
+        end
 
         it "should push a new context to the stack and create a new merged contexts hash if stack not empty" do
           r = Registry.new
