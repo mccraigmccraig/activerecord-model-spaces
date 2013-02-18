@@ -27,6 +27,10 @@ module ActiveRecord
       REGISTRY.with_context(model_space_name, model_space_key, &block)
     end
 
+    def active_key(model_space_name)
+      REGISTRY.active_key(model_space_name)
+    end
+
     def kill_context(model_space_name, model_space_key)
       REGISTRY.kill_context(model_space_name, model_space_key)
     end

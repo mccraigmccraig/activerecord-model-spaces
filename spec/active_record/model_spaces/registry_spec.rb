@@ -116,6 +116,39 @@ module ActiveRecord
         end
       end
 
+      describe "get_active_key" do
+        it "should return the key if a context is registered" do
+          r = Registry.new
+          m = create_model('FooModel')
+          r.register_model(m, :foo_space)
+
+          ms = r.send(:get_model_space, :foo_space)
+          ctx = double('foo-context')
+          ctx.stub(:model_space).and_return(ms)
+          msk = double('foo-space-key')
+          ctx.stub(:model_space_key).and_return(msk)
+          ctx.should_receive(:commit)
+          ms.should_receive(:create_context).with(:one).and_return(ctx)
+          r.with_context(:foo_space, :one) { r.active_key(:foo_space) }.should == msk
+        end
+
+        it "should return nil if no context is registered" do
+          r = Registry.new
+          m = create_model('FooModel')
+          r.register_model(m, :foo_space)
+
+          r.active_key(:foo_space).should == nil
+        end
+
+        it "should bork if the model_space is not registered" do
+          r = Registry.new
+          expect {
+            r.active_key(:foo_space)
+          }.to raise_error /no such model space: foo_space/
+
+        end
+      end
+
       describe "context proxy methods" do
         it "should call table_name on the live context" do
 

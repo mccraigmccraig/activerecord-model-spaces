@@ -116,6 +116,17 @@ module ActiveRecord
         get_model_space(model_space_name).kill_context(model_space_key)
       end
 
+      # return the key of the active context for the given model_space, or nil
+      # if there is no active context
+      def active_key(model_space_name)
+        ms = get_model_space(model_space_name)
+        raise "no such model space: #{model_space_name}" if !ms
+
+        ctx = merged_context[ms.name]
+
+        ctx.model_space_key if ctx
+      end
+
       private
 
       def register_model_space(model_space_name)

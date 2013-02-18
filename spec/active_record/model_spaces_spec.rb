@@ -17,6 +17,13 @@ module ActiveRecord
       end
     end
 
+    describe "active_key" do
+      it "should pass active_key calls to the registry" do
+        ModelSpaces::REGISTRY.should_receive(:active_key).with(:foo_space)
+        ModelSpaces.active_key(:foo_space)
+      end
+    end
+
     describe "kill_context" do
       it "should pass kill_context calls to the registry" do
         ModelSpaces::REGISTRY.should_receive(:kill_context).with(:foo_space, :one)
