@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "activerecord-model-spaces"
-  s.version = "0.1.0"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["mccraig mccraig of the clan mccraig"]
-  s.date = "2013-01-30"
+  s.date = "2013-02-20"
   s.description = "map activerecord models to tables depending on context"
   s.email = "mccraigmccraig@gmail.com"
   s.extra_rdoc_files = [

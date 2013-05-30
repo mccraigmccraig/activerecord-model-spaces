@@ -23,6 +23,7 @@ GEM
       rake
       rdoc
     json (1.7.6)
+    json (1.7.6-java)
     multi_json (1.5.0)
     rake (10.0.3)
     rcov (1.0.0)
@@ -43,11 +44,12 @@ GEM
     tzinfo (0.3.35)
 
 PLATFORMS
+  java
   ruby
 
 DEPENDENCIES
   activerecord (>= 2.3.0)
-  bundler (~> 1.2.3)
+  bundler (>= 1.2.3)
   jeweler (~> 1.8.4)
   rake (>= 0.8.7)
   rcov
